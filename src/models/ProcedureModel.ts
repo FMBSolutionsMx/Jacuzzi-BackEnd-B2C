@@ -1,0 +1,41 @@
+export default class ProcedureModel {
+    action: string = '';
+    business: string = '';
+
+    param : string = '';
+    nombre : string ='';
+    typeProm : string = '';
+    prioridad : string = '';
+    vigencia: string = '';
+	desde: string = '';
+	hasta : string = '';
+	limitada: string = '';
+	acumulable: string = '';
+	obligatoria: string = '';
+	restriccion: string = '';
+    itemCode: string = '';
+    itemName: string = '';
+    quantityItem: string = '';
+    listNumber : string = '';
+    listNum : string = '';
+    typeVol : string = '';
+    chkConditions: string = '';
+    typeSelectCond: string = ''; 
+    valueSelectCond: string = '';    
+    promoUniClient: string = '';   
+    typeReward: string = '';   
+    typeRewardFin: string = '';   
+    typeMonto: string = '';   
+    quantityarticulos: string = '';   
+    active: string = '';
+    quantitybonifi: string = '';
+    tipobonificacion: string = '';  
+    bonificacion: string = '';
+    monto : string = '';
+    items :Array<any> = [];
+    itemsBonification :Array<any> = [];
+    descuento : string = '';
+    checkAutomatico : string = '';
+    packagesInfo : Array<any> = [];
+    condiciones : Array<any> = [];
+}

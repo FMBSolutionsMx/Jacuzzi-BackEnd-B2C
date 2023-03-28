@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" Serie="F5" Folio="363579" Fecha="2021-07-13T11:23:24" Sello="HR9xnlbBbfhguWzzl8kVsYn1J2nfA1mV2MRC2KW3c8QRqbakPXaDV69pTszY2cd2no1xeyorerH3y/t6L1SR/EqQVupdAx3YkDX8nilzSOziqkBotblSC75qeOF0I3ok9gLYBwm4D3TAWN5cP7lk1LAHujgLUsD3NHhPFFR8h3XlnE55spGDdmdRblKVAAIEbCssKma+4xvLPVN+9Y0GUehCduq4x1F5sM/HJixyCJObmq6fYOMOmg+FauRD+fCi72YCP7aU8ZTF3VzbpxV4nLuSholkJJZDX3z1sXPARoWCFjomDqG3EcUdEeSnV0Ho5C22bxengiY3dg/T0IImLA==" FormaPago="02" NoCertificado="00001000000503238028" Certificado="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" CondicionesDePago="45" SubTotal="3921.26" Moneda="MXN" Total="4548.66" TipoDeComprobante="I" MetodoPago="PPD" LugarExpedicion="66367">
+  <cfdi:Emisor Rfc="DIA820111NG5" Nombre="Distribuidora Industrial de Abrasivos S.A de C.V" RegimenFiscal="601" />
+  <cfdi:Receptor Rfc="TEGL690531KJ4" Nombre="LUIS GERARDO TREVIÑO GONZALEZ" UsoCFDI="G01" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="27111552" NoIdentificacion="5465" Cantidad="30.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="SEGUETA MANUAL BIMET 218HE FIERRO LENOX" ValorUnitario="16.50" Importe="495.00">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="495.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="79.20" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31201500" NoIdentificacion="3979" Cantidad="1.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="CINTA DE EMPAQUE 076 CANELA 48 X 150 MM PAQUETE C/6" ValorUnitario="179.89" Importe="179.89">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="179.89" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="28.78" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31201500" NoIdentificacion="3996" Cantidad="5.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="MASKING TAPE 110 PLUS USO GENERAL 48 X 50 MM" ValorUnitario="33.80" Importe="169.00">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="169.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="27.04" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31191500" NoIdentificacion="301" Cantidad="50.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="HOJA LIJA J73 MEDIANO" ValorUnitario="9.2538" Importe="462.69">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="462.69" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="74.03" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="23131506" NoIdentificacion="1199" Cantidad="5.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="DISCO LAMINADO T.29 115 X 22.2 MM. G-60 TZS60 EASY CUT" ValorUnitario="44.548" Importe="222.74">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="222.74" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="35.64" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31133704" NoIdentificacion="1586" Cantidad="1.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="DISCO DE DIAMANTE 115 X 1.8  X 22.2 MM HUM DENTADO" ValorUnitario="62.24" Importe="62.24">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="62.24" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="9.96" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31133704" NoIdentificacion="1587" Cantidad="1.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="DISCO DE DIAMANTE 115 X 2.0  X 22.2 MM HUM RIN CONTINUO" ValorUnitario="59.97" Importe="59.97">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="59.97" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="9.60" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31201600" NoIdentificacion="1960" Cantidad="2.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="RESISTOL 850 FRASCO 1 KG." ValorUnitario="78.995" Importe="157.99">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="157.99" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="25.28" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211904" NoIdentificacion="4618" Cantidad="12.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="BROCHA LA REGIA 3&quot;" ValorUnitario="25.281667" Importe="303.38">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="303.38" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="48.54" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211904" NoIdentificacion="4619" Cantidad="12.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="BROCHA LA REGIA 4&quot;" ValorUnitario="39.2625" Importe="471.15">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="471.15" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="75.38" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211904" NoIdentificacion="4620" Cantidad="6.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="BROCHA LA REGIA 5&quot;" ValorUnitario="49.07" Importe="294.42">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="294.42" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="47.11" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211904" NoIdentificacion="4621" Cantidad="6.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="BROCHA LA REGIA 6&quot;" ValorUnitario="51.581667" Importe="309.49">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="309.49" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="49.52" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31201600" NoIdentificacion="1939" Cantidad="8.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="RESISTOL NO MAS CLAVOS 353 G FUERTE Y FACIL  PNMC-" ValorUnitario="64.7275" Importe="517.82">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="517.82" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="82.85" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211900" NoIdentificacion="4671" Cantidad="2.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="EXTENSION METALICA 1.20 M  A 2.40 M" ValorUnitario="47.10" Importe="94.20">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="94.20" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="15.07" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="31211900" NoIdentificacion="4672" Cantidad="2.00" ClaveUnidad="H87" Unidad="PZA" Descripcion="EXTENSION METALICA 1.50 M 3.00 M" ValorUnitario="60.64" Importe="121.28">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="121.28" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="19.40" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="627.40">
+    <cfdi:Traslados>
+      <cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="627.40" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" SelloCFD="HR9xnlbBbfhguWzzl8kVsYn1J2nfA1mV2MRC2KW3c8QRqbakPXaDV69pTszY2cd2no1xeyorerH3y/t6L1SR/EqQVupdAx3YkDX8nilzSOziqkBotblSC75qeOF0I3ok9gLYBwm4D3TAWN5cP7lk1LAHujgLUsD3NHhPFFR8h3XlnE55spGDdmdRblKVAAIEbCssKma+4xvLPVN+9Y0GUehCduq4x1F5sM/HJixyCJObmq6fYOMOmg+FauRD+fCi72YCP7aU8ZTF3VzbpxV4nLuSholkJJZDX3z1sXPARoWCFjomDqG3EcUdEeSnV0Ho5C22bxengiY3dg/T0IImLA==" NoCertificadoSAT="00001000000504204441" RfcProvCertif="CVD110412TF6" UUID="3917E746-EBEB-4794-B99C-9F5822516D26" FechaTimbrado="2021-07-13T11:33:01" SelloSAT="o2e7X2lz0iFmBIb494Ofr37F30c13nd3o6qfrkThgOjvzIgfmLuzs8deQHAKMbPEbMguFuhQCNzrlA2LyKBfKrZZVBjeIwyk2gf91NwXOauhMQ9SM0TcyhsCZGmvO7Ei8LrV96/BIVKMHbtFTIrQlrh4O1BFyrybTa3F0JfqOiR0r8ZG4DYfaXvJK7DOu732YEYyXeVKc8wlH0Dq/O4zVhJtETah4pj64YccuYv4AOoc75jRntCSYWrP/9UlTDGWUuZtbwwhICxvtMaAd7jUwIpW2Od7OXbQgAlPbQUmOPVKXTx82CMe4h9bofNTRvhug1phetcPLc4AEWOFN2GRWA==" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>
