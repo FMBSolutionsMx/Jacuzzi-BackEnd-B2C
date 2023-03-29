@@ -17,7 +17,9 @@ class OptionsController {
             waitForConnections: true,
             connectionLimit: 100,
             queueLimit: 0
-        });    
+        });
+
+      
     }//Fin del constructor
     
     public async OrdersProcedure(sql: string, parametros: any) {
@@ -26,6 +28,7 @@ class OptionsController {
         // //console.log("Pass",helpers.encryptData("P3L1gr06cdb10150d@"));
         // //console.log("DB",helpers.encryptData("dbs535295"));
         return (await this.pool).query(sql, parametros).then((row: any) => {
+            
             return Promise.resolve(row[0]);
         }).catch((err: any) => {
             

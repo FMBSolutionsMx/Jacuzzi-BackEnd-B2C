@@ -22,6 +22,7 @@ export default {
         connectionTimeout: 2 * 60 * 1000,
         requestTimeout: 2 * 60 * 1000,
     },
+    
     database : {
         user: 'sa',
         password: 'Solutions@2019',

@@ -53,53 +53,34 @@ class Server {
    */
   async GetSettings() {
     try {
-      // HANA  
-      // const sh = new SchemaService ();
-      // HANA  
       const option = new OptionsController();
       const paper2 = await option.GetData();
+      
       let sql = "SELECT * from business_config  WHERE wareHouseDefault=?";
       let parameter = [paper2];
       let _ult_ = await option.OrdersProcedure(sql, parameter);
-
-      /*if (
-        _ult_ !== undefined &&
-        _ult_.groupCodeDefault ==
-          "ed93328c34b3461cd391e5ccece8ba7cf086c07f88d128d3da6b3bb0817186503f065bd7e836105f8c1b0d07b47e03911fc326de8fff720d584a432ec5d79a38f627b1eb5c276ae124f56a4bedc7c4dfa7fb678d76bb6c24ed6d3b7b4569950d0e"
-      ) {
-      } else {
-        //console.log(
-          "¡Error con el sistema, por favor contacte a soporte técnico!"
-        );
-        process.exit(1);
-      }*/
-    // HANA  
-    // const settings = await sh.statements(`SELECT * FROM "_E_HANDEL_B2C"."soap_config"`);
-    // const business = await sh.statements(`SELECT * FROM "_E_HANDEL_B2C"."business"`);
-    // const businessConfig = await sh.statements(`SELECT * FROM "_E_HANDEL_B2C"."business_config"`);
-    // console.log(settings[0],business[0],businessConfig[0]);
+      
     
-    // logger.info("sap_config: %o", JSON.stringify(settings[0]));
-    // logger.info("business: %o", JSON.stringify(business[0]));
-    // logger.info("businessConfig: %o", JSON.stringify(businessConfig[0]));
-    // global.sap_config = JSON.stringify(settings);
-    // global.business = JSON.stringify(business);
-    // global.businessConfig = JSON.stringify(businessConfig);
-    // HANA  
       const db = new DatabaseService();
       const settings = await db.Query("SELECT * FROM soap_config");
       const business = await db.Query("SELECT * FROM business");
       const businessConfig = await db.Query("SELECT * FROM business_config");
-      logger.info("sap_config: %o", JSON.stringify(settings.recordset));
-      logger.info("business: %o", JSON.stringify(business.recordset));
-      logger.info("businessConfig: %o", JSON.stringify(businessConfig.recordset));
+      console.log('117>> businessConfig',businessConfig )
+      console.log('117>> business', business)
+
       global.sap_config = JSON.stringify(settings.recordset);
       global.business = JSON.stringify(business.recordset);
       global.businessConfig = JSON.stringify(businessConfig.recordset);
+
+      logger.info("sap_config: %o", JSON.stringify(settings.recordset));
+      logger.info("business: %o", JSON.stringify(business.recordset));
+      logger.info("businessConfig: %o", JSON.stringify(businessConfig.recordset));
     } catch (e) {
+      console.log('117>> hay error aqaui ???', e)
       logger.error('INDEX => ',e);
     }
   }
+  
 
   /**
    * Metodo para iniciar API aplicando configuracion de puerto para escuchar
@@ -109,15 +90,21 @@ class Server {
     //   logger.info("Handel on port %o", this.app.get("port"))
     // );
     // server.timeout = 2 * 60 * 1000;
-    this.app.listen(this.app.get("port"), () => {this.app.get("port")});
 
-    const sslServer = https.createServer({
-        key: fs.readFileSync(path.join(__dirname,'cert', 'key.pem')),
-        cert: fs.readFileSync(path.join(__dirname,'cert', 'cert.pem')),
-      },
-      this.app
-    )
-    sslServer.listen(3000, () => console.log("Servdor seguro iniciado en el puerto 3000"))
+    const server = this.app.listen(this.app.get('port'), () => {
+      logger.info("index-start-> "+"Server on port %o",this.app.get('port')); 
+        console.log("Server on port",this.app.get('port'))
+        this.GetSettings();
+    })
+    server.timeout = 1 * 60 * 1000;
+    // this.app.listen(this.app.get("port"), () => {this.app.get("port")});
+    // const sslServer = https.createServer({
+    //     key: fs.readFileSync(path.join(__dirname,'cert', 'key.pem')),
+    //     cert: fs.readFileSync(path.join(__dirname,'cert', 'cert.pem')),
+    //   },
+    //   this.app
+    // )
+    // sslServer.listen(3000, () => console.log("Servidor seguro iniciado en el puerto 3000"))
   
   }
 }
