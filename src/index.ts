@@ -58,10 +58,11 @@ class Server {
       // HANA  
       const option = new OptionsController();
       const paper2 = await option.GetData();
+      
       let sql = "SELECT * from business_config  WHERE wareHouseDefault=?";
       let parameter = [paper2];
       let _ult_ = await option.OrdersProcedure(sql, parameter);
-
+      
       /*if (
         _ult_ !== undefined &&
         _ult_.groupCodeDefault ==
@@ -100,6 +101,7 @@ class Server {
       logger.error('INDEX => ',e);
     }
   }
+  
 
   /**
    * Metodo para iniciar API aplicando configuracion de puerto para escuchar
@@ -109,15 +111,21 @@ class Server {
     //   logger.info("Handel on port %o", this.app.get("port"))
     // );
     // server.timeout = 2 * 60 * 1000;
-    this.app.listen(this.app.get("port"), () => {this.app.get("port")});
 
-    const sslServer = https.createServer({
-        key: fs.readFileSync(path.join(__dirname,'cert', 'key.pem')),
-        cert: fs.readFileSync(path.join(__dirname,'cert', 'cert.pem')),
-      },
-      this.app
-    )
-    sslServer.listen(3000, () => console.log("Servdor seguro iniciado en el puerto 3000"))
+    const server = this.app.listen(this.app.get('port'), () => {
+      logger.info("index-start-> "+"Server on port %o",this.app.get('port')); 
+        console.log("Server on port",this.app.get('port'))
+        this.GetSettings();
+    })
+    server.timeout = 1 * 60 * 1000;
+    // this.app.listen(this.app.get("port"), () => {this.app.get("port")});
+    // const sslServer = https.createServer({
+    //     key: fs.readFileSync(path.join(__dirname,'cert', 'key.pem')),
+    //     cert: fs.readFileSync(path.join(__dirname,'cert', 'cert.pem')),
+    //   },
+    //   this.app
+    // )
+    // sslServer.listen(3000, () => console.log("Servidor seguro iniciado en el puerto 3000"))
   
   }
 }
