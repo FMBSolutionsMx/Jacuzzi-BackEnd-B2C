@@ -441,6 +441,7 @@ export async function ProductsEspecial(request: Request, response: Response) {
         action = 'getPromo';
         actionCount = 'countGetPromo';
         let result: any = await FeaturedProcedure(action, nextNum || 0, '', limitSlider,(whs ? whs : wareHouse),CardCode);
+        console.log('117>> result',result )
         action = 'getNuevos';
         actionCount = 'countGetNuevos';
         let result2: any = await FeaturedProcedure(action, nextNum || 0, '', limitSlider,(whs ? whs : wareHouse),CardCode);
