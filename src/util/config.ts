@@ -1,11 +1,13 @@
+"use strict";
+// Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Configuracion para conectar a base de datos
  */
 export default {
     /**
-     * Configuracion de usuarios maximos 
+     * Configuracion de usuarios maximos
      */
-    poolConfig :{
+    poolConfig: {
         min: 0,
         max: 40,
         log: true
@@ -13,31 +15,41 @@ export default {
     /**
      * configuracion para conectar a nuestra base de datos
      */
-    connectionConfig:{
+    connectionConfig: {
+		// LOCAL 
+        server: '192.168.0.171',
         userName: 'sa',
         password: 'Solutions@2019',
-        // password: 'RedHogar1.',
-        server: '192.168.0.171',
-        // server: '192.168.1.210'
+		
+		// CLIENTE
+        // server: 'WINSQLJACUZZI',
+        // userName: 'sa',
+        // password: 'Jacuzzi2020*',
+		
         connectionTimeout: 2 * 60 * 1000,
         requestTimeout: 2 * 60 * 1000,
     },
-    database : {
+    database: {
+		// LOCAL
+		server: '192.168.0.171',
+		database: 'Handel_B2C_Jacuzzi',
         user: 'sa',
         password: 'Solutions@2019',
-        // password: 'RedHogar1.',
-        server: '192.168.0.171',
-        // server: '192.168.1.210',
-        database: 'Handel_B2C_Irco',
-        //database: 'Handel-B2B',
-        port:1433,
+		
+		// CLIENTE
+		// server: 'WINSQLJACUZZI',
+		// database: 'Handel_B2C_Jacuzzi',
+        // user: 'sa',
+        // password: 'Jacuzzi2020*',
+      
+        port: 1433,
         connectionTimeout: 2 * 60 * 1000,
         requestTimeout: 2 * 60 * 1000,
         pool: {
             max: 100,
             min: 0,
-            idleTimeoutMillis:  2 * 60 * 1000,
-            evictionRunIntervalMillis:  2 * 60 * 1000,
+            idleTimeoutMillis: 2 * 60 * 1000,
+            evictionRunIntervalMillis: 2 * 60 * 1000,
         },
         options: {
             //encrypt: true,
@@ -45,5 +57,4 @@ export default {
             enableArithAbort: true
         }
     },
-    
-}
+};

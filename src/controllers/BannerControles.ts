@@ -14,8 +14,7 @@ class SendController {
             const db = new DatabaseService();
             let data: any,status = 500;
             try {
-                const result = await db
-                .connect()
+                const result = await db.connect()
                 .then(async (pool: any) => {
                     return await pool
                         .request()
