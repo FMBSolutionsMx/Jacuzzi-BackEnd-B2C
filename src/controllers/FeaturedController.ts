@@ -489,7 +489,6 @@ export async function ProductsEspecial(request: Request, response: Response) {
             ValidationSpecialPrices = true;
         } 
    
-       
 
         for (let j = 0; j < result.length; j++) {
             const element = result[j];
