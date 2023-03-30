@@ -1,5 +1,4 @@
 "use strict";
-// Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Configuracion para conectar a base de datos
  */

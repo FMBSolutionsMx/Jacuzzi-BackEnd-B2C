@@ -10,7 +10,8 @@ class SendController {
 
     public async GetSlideFront(req: Request, res: Response): Promise<void> {
         let GlobalBusiness = JSON.parse(global.business);
-        if(GlobalBusiness[0].type === 'SQL'){
+        console.log('117>> GlobalBusiness',GlobalBusiness )
+        // if(GlobalBusiness[0].type === 'SQL'){
             const db = new DatabaseService();
             let data: any,status = 500;
             try {
@@ -37,21 +38,21 @@ class SendController {
                 status = 200;
                 data = result.recordset;
             } catch (e) {
-                logger.error("Algo vamal con SildeFront",e);
+                logger.error("Algo va mal con SildeFront",e);
             } finally {
                 await db.disconnect();
             }
 
             res.json(data);
-        }else{
-            try {
-                let resHana= await sh.statements(`CALL _E_HANDEL_B2C.SPBANNERS('GETFRONT','on','off','on','','')`);
-                res.json(resHana || []); 
-            } catch (error) {
-                logger.error("Algo vamal con SildeFront",error);
-                res.json([]); 
-            }
-        }
+        // }else{
+        //     try {
+        //         let resHana= await sh.statements(`CALL _E_HANDEL_B2C.SPBANNERS('GETFRONT','on','off','on','','')`);
+        //         res.json(resHana || []); 
+        //     } catch (error) {
+        //         logger.error("Algo vamal con SildeFront",error);
+        //         res.json([]); 
+        //     }
+        // }
     }// end function get banners for front public.
 
     public async GetAllRecords(req: Request, res: Response): Promise<void> {
@@ -92,13 +93,13 @@ class SendController {
             }
             res.json(data);
         }else{
-            try {
-                let resHana= await sh.statements(`CALL _E_HANDEL_B2C.SPBANNERS('GETALLADMIN','','','','','')`);
-                res.json(resHana || []); 
-            } catch (error) {
-                logger.error("GETALLADMIN: ",error);
-                res.json([]); 
-            }
+            // try {
+            //     let resHana= await sh.statements(`CALL _E_HANDEL_B2C.SPBANNERS('GETALLADMIN','','','','','')`);
+            //     res.json(resHana || []); 
+            // } catch (error) {
+            //     logger.error("GETALLADMIN: ",error);
+            //     res.json([]); 
+            // }
         }
     }// end function get banners for front admin.
 

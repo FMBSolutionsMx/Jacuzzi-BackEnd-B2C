@@ -91,7 +91,7 @@ class Server {
     const server = this.app.listen(this.app.get('port'), () => {
       logger.info("index-start-> "+"Server on port %o",this.app.get('port')); 
         console.log("Server on port",this.app.get('port'))
-        this.GetSettings();
+        // this.GetSettings();
     })
     server.timeout = 1 * 60 * 1000;
 
