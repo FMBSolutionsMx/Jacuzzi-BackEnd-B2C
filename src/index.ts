@@ -31,7 +31,7 @@ class Server {
    * Obtiene configuraciones para iniciar API
    */
   config(): void {
-    this.app.set("port", 3054);
+    this.app.set("port", 4000);
     this.app.use(morgan("dev"));
     this.app.use(cors());
     this.app.use(express.json());
@@ -70,7 +70,7 @@ class Server {
       global.business = JSON.stringify(business.recordset);
       global.businessConfig = JSON.stringify(businessConfig.recordset);
     } catch (e) {
-      console.log('117>> hay error aqaui ???', e)
+      // console.log('117>> hay error aqaui ???', e)
       logger.error('INDEX => ', e);
     }
   }
