@@ -24,7 +24,7 @@ class Server {
     this.config();
     this.routes();
     this.GetSettings();
-    console.log("Application Started! NUEVOO");
+    console.log("Application Started! on port: ",this.app.get('port'));
   }
 
   /**
@@ -62,14 +62,14 @@ class Server {
       const settings = await db.Query("SELECT * FROM soap_config");
       const business = await db.Query("SELECT * FROM business");
       const businessConfig = await db.Query("SELECT * FROM business_config");
-      console.log('117>> business',business )
+      console.log('DARWIN>>config',business);
 
-      logger.info("sap_config: %o", JSON.stringify(settings.recordset));
-      logger.info("business: %o", JSON.stringify(business.recordset));
-      logger.info("businessConfig: %o", JSON.stringify(businessConfig.recordset));
-      global.sap_config = JSON.stringify(settings.recordset);
-      global.business = JSON.stringify(business.recordset);
-      global.businessConfig = JSON.stringify(businessConfig.recordset);
+        logger.info("sap_config: %o", JSON.stringify(settings.recordset));
+        logger.info("business: %o", JSON.stringify(business.recordset));
+        logger.info("businessConfig: %o", JSON.stringify(businessConfig.recordset));
+        global.sap_config = JSON.stringify(settings.recordset);
+        global.business = JSON.stringify(business.recordset);
+        global.businessConfig = JSON.stringify(businessConfig.recordset);
     } catch (e) {
       logger.error('INDEX => ',e);
     }
