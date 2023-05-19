@@ -17,7 +17,7 @@ export class DatabaseService {
     this.connection = new ConnectionPool(config.database);
   }
    /**
-    * Crea una conexion a base de datos
+    * Crea una conexión a base de datos
     */
   async connect(): Promise<ConnectionPool> {
     try {
@@ -66,6 +66,7 @@ export class DatabaseService {
      
       data = result;
     } catch (e) {
+      console.log('117>> hay error? databaseQuery',e )
       logger.error(e);
     } finally {
       await this.disconnect();

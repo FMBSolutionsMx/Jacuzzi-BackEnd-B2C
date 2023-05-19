@@ -1,15 +1,15 @@
-import {Request, Response} from "express";
-import moment from 'moment';
-import VentasClientes from '../interfaces/VentasClientes';
-import {getShoppingCart} from "./ProfileController";
+import { Request, Response } from "express";
+import moment from "moment";
+import VentasClientes from "../interfaces/VentasClientes";
+import { getShoppingCart } from "./ProfileController";
 import ResponseModel from "../models/ResponseModel";
-import OrdersModel from '../models/OrdersModel';
-import OrdersProcedure from '../procedures/OrdersProcedure';
+import OrdersModel from "../models/OrdersModel";
+import OrdersProcedure from "../procedures/OrdersProcedure";
 import ProductsModel from "../models/ProductsModel";
 import ProductsProcedure from "../procedures/ProductsProcedure";
-import {getTypeDocument} from '../interfaces/xml';
-import {helpers} from '../middleware/helper';
-import {logger} from "../util/logger";
+import { getTypeDocument } from "../interfaces/xml";
+import { helpers } from "../middleware/helper";
+import { logger } from "../util/logger";
 import SeriesProcedure from "../procedures/SeriesProcedure";
 import EmailProcedure from "../procedures/EmailProcedure";
 import { ConsoleTransportOptions } from "winston/lib/winston/transports";
@@ -18,25 +18,26 @@ import { insertPoints } from "../controllers/PointsHistoryController";
 import PointsHistoryModel from "../models/PointsHistoryModel";
 import PointsHistoryProcedure from "../procedures/PointsHistoryProcedure";
 import { DatabaseService } from "../util/database";
-import {orderValidate} from '../middleware/Order';
+import { orderValidate } from "../middleware/Order";
 import { SchemaService } from "../util/Schema";
-import formidable from 'formidable';
-const fs = require('fs-extra')
+import formidable from "formidable";
+const fs = require("fs-extra");
 
 export async function createDocuments(request: Request, response: Response) {
-    const {db_name, sapConfig, taxCode, currency, paymentMethod, type} = response.locals.business;
-    const {profile_id} = response.locals.user;
-    const {CardCode,GroupNum} = response.locals.user;
-    const {U_FMB_Handel_Email} = response.locals.user;
-    const {CardName, wareHouse} = response.locals.user;
-    const {objType, address, bill, responseFlete, empID,creator, comment,insurance, itemsGift, fecha, discPrcnt,discPnt, Handel,IdPackge,PorCobrar,tipoEntrega,convenio, datos,packageKeySelect} = request.body;
-
-  if(type === 'SQL'){
+  const { db_name, sapConfig, taxCode, currency, paymentMethod, type } =
+    response.locals.business;
+  const { profile_id } = response.locals.user;
+  const { CardCode, GroupNum } = response.locals.user;
+  const { U_FMB_Handel_Email } = response.locals.user;
+  const { CardName, wareHouse } = response.locals.user;
+  const {objType,address,bill,responseFlete,empID,creator,comment,insurance,itemsGift,fecha,discPrcnt,discPnt,Handel,IdPackge,PorCobrar,tipoEntrega,convenio,datos,packageKeySelect,} = request.body;  
+  // console.log('DARWIN>>request',request);   
+  if (type === "SQL") {
     let serie;
     let maniobrasdos = insurance ? insurance : 0;
 
     //Se define el nuemro de seríe
-    await SeriesProcedure('getSerie').then(result => {
+    await SeriesProcedure("getSerie").then((result) => {
       serie = result[0].serieDefault;
     });
     // await SeriesProcedure('getSeries').then(result => {
@@ -66,32 +67,33 @@ export async function createDocuments(request: Request, response: Response) {
     let shoppingCart: any = await getShoppingCart(request, response, true);
     //obtiene lo que trae el arreglo del carrito
 
-    if(!shoppingCart.status){
-        responseModel.message = 'Ocurrió un error al obtener el carrito de compras para generar el pedido';
-        response.json(responseModel);
-        return;
+    if (!shoppingCart.status) {
+      responseModel.message =
+        "Ocurrió un error al obtener el carrito de compras para generar el pedido";
+      response.json(responseModel);
+      return;
     }
 
     let cardCode = CardCode;
-    let addressKey = '';
-    let billKey = '';
-    let comments = '';
+    let addressKey = "";
+    let billKey = "";
+    let comments = "";
     let docCurrency = currency;
     //Email del cliente
     // let mailToCliente = U_FMB_Handel_Email;
     let nameMail = CardName;
-    let totalMail = '0';
+    let totalMail = "0";
 
-    if(profile_id){
-      if(address.address===bill.address){
+    if (profile_id) {
+      if (address.address === bill.address) {
         addressKey = address.address;
         billKey = "";
-      }else{
+      } else {
         addressKey = address.address;
         billKey = bill.address;
       }
-    }else{
-        comments = `
+    } else {
+      comments = `
         nombre: ${address.name}, email: ${address.email}, telefono: ${address.phone},
         calle: ${address.street}, colonia: ${address.block}, municipio: ${address.city},código postal: ${address.cp},
         estado: ${address.state}, pais: ${address.country},
@@ -107,36 +109,38 @@ export async function createDocuments(request: Request, response: Response) {
     let taxTransport = 0;
     let limit = 0;
     let articulos: any = [];
-    shoppingCart.data.shoppingCart.map((item:any) => {
-        let totalPrice = Number((item.Price * item.Rate) * item.quantity);
-        subTotal += totalPrice;
-        tax = item.taxRate;
-        taxTotal += Number(item.taxSum * item.quantity);
-        articulos.push({'ItemCode': item.ItemCode, 'quantity': parseInt(item.quantity)});
+    shoppingCart.data.shoppingCart.map((item: any) => {
+      let totalPrice = Number(item.Price * item.Rate * item.quantity);
+      subTotal += totalPrice;
+      tax = item.taxRate;
+      taxTotal += Number(item.taxSum * item.quantity);
+      articulos.push({
+        ItemCode: item.ItemCode,
+        quantity: parseInt(item.quantity),
+      });
     });
     articulos = JSON.stringify(articulos);
-    
+
     limit = parseInt(responseFlete.PurchaseLimit);
     transport = parseFloat(responseFlete.Price);
-    taxTransport = Number(transport*(tax*0.01));
+    taxTransport = Number(transport * (tax * 0.01));
     //Validacion del flete
-    if(subTotal < limit){
-        taxTotal = taxTotal + taxTransport;
-        total = subTotal + transport + taxTotal;
-    }else{
-        transport = 0;
-        total = subTotal + transport + taxTotal;
+    if (subTotal < limit) {
+      taxTotal = taxTotal + taxTransport;
+      total = subTotal + transport + taxTotal;
+    } else {
+      transport = 0;
+      total = subTotal + transport + taxTotal;
     }
 
-
     //#region AUTORIZACION
-    let autorizaciones : any = []; // await AuthorizationDocuments(request,response);
+    let autorizaciones: any = []; // await AuthorizationDocuments(request,response);
     //#endregion AUTORIZACION
     let doc = getTypeDocument(objType);
 
     // Buscando puntos
     let model: ProductsModel = new ProductsModel();
-    model.action = 'getPoints';
+    model.action = "getPoints";
     model.cardCode = CardCode;
     model.business = db_name;
 
@@ -150,119 +154,152 @@ export async function createDocuments(request: Request, response: Response) {
       model.key = itemPoints[i].ItemCode;
       model.quantity = itemPoints[i].quantity;
       let points = await ProductsProcedure(model);
-      if(points && points.length > 0){
+      if (points && points.length > 0) {
         let queryPoints = Number(points[0].queryPoints).toFixed(0);
         itemPoints[i].itemPoint = Number(queryPoints);
         totalPoints += Number(queryPoints);
-      }else{
+      } else {
         itemPoints[i].itemPoint = 0;
         totalPoints += 0;
       }
 
-      let totalPrice = Number(itemPoints[i].Price) * Number(itemPoints[i].quantity);
-      
-      if(itemPoints[i].U_FMB_Handel_PNTA == 1){
+      let totalPrice =
+        Number(itemPoints[i].Price) * Number(itemPoints[i].quantity);
+
+      if (itemPoints[i].U_FMB_Handel_PNTA == 1) {
         let valuePoints = Number(activePointsNew) * Number(valueEquals);
-        if(valuePoints >= totalPrice){
-            valuePoints = totalPrice;
+        if (valuePoints >= totalPrice) {
+          valuePoints = totalPrice;
         }
         totalPrice -= valuePoints;
-        
-        let discPrcntBack = totalPrice == 0 ? Number(99.99).toFixed(2) : Number(((valuePoints * 100)) / (Number(itemPoints[i].Price * Number(itemPoints[i].quantity)))).toFixed(2);
-        itemPoints[i].discount = discPrcntBack === 'NaN' ? 0 : discPrcntBack;
+
+        let discPrcntBack =
+          totalPrice == 0
+            ? Number(99.99).toFixed(2)
+            : Number(
+                (valuePoints * 100) /
+                  Number(itemPoints[i].Price * Number(itemPoints[i].quantity))
+              ).toFixed(2);
+        itemPoints[i].discount = discPrcntBack === "NaN" ? 0 : discPrcntBack;
         //Restar puntos
-        activePointsNew -= valuePoints/valueEquals;
-      }  
+        activePointsNew -= valuePoints / valueEquals;
+      }
     }
 
     let transportWithoutTax = parseFloat(insurance); //Seguro con iva
-    transportWithoutTax = Number(( transportWithoutTax - (transportWithoutTax * (itemPoints[0].taxRate/100)) ).toFixed(2));
+    transportWithoutTax = Number(
+      (
+        transportWithoutTax -
+        transportWithoutTax * (itemPoints[0].taxRate / 100)
+      ).toFixed(2)
+    );
     let insuranceObject = {
       // ItemCode: 'MANIOBRAS II',
       // quantity: '1',
       // Price: transportWithoutTax
-    }
+    };
 
     let service = autorizaciones.length > 0 ? "DraftsService" : doc.service;
     // let estado = autorizaciones.length > 0 ? "A" : 'C'
     // Eliminar puntos en caso de que se hayan usado
-    let dataInsertMinus = 0; 
-    if(Number(discPnt) != 0){
+    let dataInsertMinus = 0;
+    if (Number(discPnt) != 0) {
       dataInsertMinus = activePointsNewCopy - activePointsNew;
     }
 
     let data = {
-      header: { 
-        dataInsertMinus, 
-        objType, 
+      header: {
+        dataInsertMinus,
+        objType,
         service,
-        cardCode, 
-        currency, 
-        docCurrency, 
-        addressKey, 
-        billKey, 
-        comments, 
-        comment, 
-        wareHouse, 
-        taxCode, serie, paymentMethod,empID,creator, totalPoints,discPrcnt,IdPackge, PorCobrar, tipoEntrega, convenio, insurance, datos,packageKeySelect }, //estado
+        cardCode,
+        currency,
+        docCurrency,
+        addressKey,
+        billKey,
+        comments,
+        comment,
+        wareHouse,
+        taxCode,
+        serie,
+        paymentMethod,
+        empID,
+        creator,
+        totalPoints,
+        discPrcnt,
+        IdPackge,
+        PorCobrar,
+        tipoEntrega,
+        convenio,
+        insurance,
+        datos,
+        packageKeySelect,
+      }, //estado
       items: itemPoints || [],
-      itemsGift : itemsGift || [],
+      itemsGift: itemsGift || [],
       responseFlete: responseFlete || [],
       address: address,
       bill: bill,
-      insurance: insuranceObject
+      insurance: insuranceObject,
     };
-    
+    data.items[0].OnHand = 2
+    data.items[0].PriceTaxECommerce = 30  
+    data.items[0].U_MultiploVenta = 1
+    console.log('DARWIN>>data.items[0].OnHand',data.items[0].OnHand);
     const ventasClienteInterface = new VentasClientes(sapConfig);
-    
+    console.log('DARWIN>>data',data);
     ventasClienteInterface.createXML(data);
     ventasClienteInterface.setOptions();
-    let responseDiServer:any = await ventasClienteInterface.createCall();
-
-    if(!responseDiServer.status){
-        responseModel.message = 'Ocurrio un error al generar tu pedido. intentalo nuevamente (estado de la orden)';
-        response.json(responseModel);
-        return;
-    }        
+    let responseDiServer: any = await ventasClienteInterface.createCall();
+    console.log("DARWIN>>responseDiServer", responseDiServer);
+    if (!responseDiServer.status) {
+      responseModel.message =
+        "Ocurrio un error al generar tu pedido. intentalo nuevamente (estado de la orden)";
+      response.json(responseModel);
+      return;
+    }
 
     let ordersModel: OrdersModel = new OrdersModel();
 
-    ordersModel.action = 'findDocNum';
+    ordersModel.action = "findDocNum";
     ordersModel.business = db_name;
     ordersModel.docEntry = responseDiServer.docEntry || 0;
-    ordersModel.table = autorizaciones.length > 0 ? "ODRF" : doc.table; // 
+    ordersModel.table = autorizaciones.length > 0 ? "ODRF" : doc.table; //
 
     let datosCliente = {
-      actions : 'DATOS',
-      param1 : CardCode,
-      param2 : '', 
-      param3 : '',
-    }
+      actions: "DATOS",
+      param1: CardCode,
+      param2: "",
+      param3: "",
+    };
     let CorreoCliente = await AutorizacionesProcedure(datosCliente);
 
     let docNumResponse = await OrdersProcedure(ordersModel);
 
-    if(!docNumResponse || !docNumResponse[0]){
-        responseModel.message = 'Ocurrio un error al generar tu pedido. intentalo nuevamente (valida un numero)';
-        response.json(responseModel);
-        return;
+    if (!docNumResponse || !docNumResponse[0]) {
+      responseModel.message =
+        "Ocurrio un error al generar tu pedido. intentalo nuevamente (valida un numero)";
+      response.json(responseModel);
+      return;
     }
 
     // FALTA AGREGAR ESTO EN AUTORIZACIONES EN CASO DE QUE SE VAYA A BORRADORES
-    if(ordersModel.table !== "ODRF"){
+    if (ordersModel.table !== "ODRF") {
       // HAcer la incersion a la tabla de movimientos de punto
       // Resta de puntos utilizados
-      if(Number(discPnt) != 0){
+      if (Number(discPnt) != 0) {
         let dataInsertDeleteUsedPoints = {
           DocEntry: responseDiServer.docEntry,
           DocType: 23,
           DocNum: docNumResponse[0].DocNum,
           CardCode: CardCode,
           Total: activePointsNewCopy - activePointsNew,
-          Type: 'resta',
-          UsedPoints: '1'
-        }   
-        let resultInsertDeleteUsedPoints = await insertPoints(dataInsertDeleteUsedPoints);
+          Type: "resta",
+          UsedPoints: "1",
+        };
+        let resultInsertDeleteUsedPoints = await insertPoints(
+          dataInsertDeleteUsedPoints
+        );
       }
       // if(Number(discPnt) != 0){
       //   let dataInsertMinus = {
@@ -272,7 +309,7 @@ export async function createDocuments(request: Request, response: Response) {
       //     Total: activePointsNewCopy - activePointsNew,
       //     Type: "resta",
       //   }
-      //   let resultInsert = await insertPoints(dataInsertMinus); 
+      //   let resultInsert = await insertPoints(dataInsertMinus);
       // }
 
       // NO se debe agregar a tabla porque aun no es Factura
@@ -284,8 +321,8 @@ export async function createDocuments(request: Request, response: Response) {
       //     Total: totalPoints,
       //     Type: "suma",
       //   }
-    
-      //   let resultInsert = await insertPoints(dataInsert);  
+
+      //   let resultInsert = await insertPoints(dataInsert);
       // }
     }
     // let mensajeCond = CorreoCliente[0].PymntGroup;
@@ -294,47 +331,66 @@ export async function createDocuments(request: Request, response: Response) {
 
     let isDraft = ordersModel.docEntry;
     let hoy = new Date();
-    let today = moment(hoy).format('YYYYMMDD');
+    let today = moment(hoy).format("YYYYMMDD");
     var Hora = hoy.getHours();
     var Min = hoy.getMinutes();
-    let CorreoAutorizadores = '';
+    let CorreoAutorizadores = "";
     let file: any[] = [];
 
     for (let index = 0; index < autorizaciones.length; index++) {
       const datos = autorizaciones[index];
-      CorreoAutorizadores += datos.Correo+",";                   
+      CorreoAutorizadores += datos.Correo + ",";
       try {
         let wtmCode = file.indexOf(datos.wtm);
-        if(wtmCode == -1){
+        if (wtmCode == -1) {
           file.push(datos.wtm);
-          let respon = await db.Query(`INSERT INTO [Handel_B2C_Irco].[dbo].[FMB_OWDD] 
+          let respon =
+            await db.Query(`INSERT INTO [Handel_B2C_Irco].[dbo].[FMB_OWDD] 
           (U_WtmCode,U_OwnerID,U_DocEntry,U_ObjType,CartShop,U_DocDate,U_CurrStep,U_Status,U_Remarks,U_UserSign,U_CreateDate,U_CreateTime,U_IsDraft,U_MaxReqr,U_MaxRejReqr) 
-          VALUES (${datos.wtm},${datos.autoId},${isDraft},'17','${articulos}','${today}',${datos.wst},'W','${datos.nameCond}','1','${today}',${Hora+''+Min},'Y',${datos.MaxReqr},${datos.MaxRejReqr})`);   
-        }              
+          VALUES (${datos.wtm},${
+              datos.autoId
+            },${isDraft},'17','${articulos}','${today}',${datos.wst},'W','${
+              datos.nameCond
+            }','1','${today}',${Hora + "" + Min},'Y',${datos.MaxReqr},${
+              datos.MaxRejReqr
+            })`);
+        }
         await db.Query(`INSERT INTO [Handel_B2C_Irco].[dbo].[FMB_WDD1] 
             (U_WddCode,U_StepCode,U_UserID,U_Status,U_Remarks,U_UserSign,U_CreateDate,U_CreateTime,U_UpdateDate,U_UpdateTime)
-            VALUES (${isDraft},${datos.wst},${datos.autoId},'W','${datos.nameCond}','1','${today}',${Hora+''+Min},'${today}',1)`);    
-      }
-      catch (e) {
+            VALUES (${isDraft},${datos.wst},${datos.autoId},'W','${
+          datos.nameCond
+        }','1','${today}',${Hora + "" + Min},'${today}',1)`);
+      } catch (e) {
         logger.error("Autorizacion-> Insert FMB_OWDD: ", e);
-      }  
+      }
     }
 
     let Subtotal = 0;
-    let Total = 0; 
+    let Total = 0;
     // let tax = 0;
     let totalpesoNeto = 0;
-    let tipoVta= '';
-    let des = '';
-  
-      let DocEntry = des === 'Drafts' ? docNumResponse[0].DocNum+'-'+ docNumResponse[0].DocEntry :  docNumResponse[0].DocNum;
-  
-      let titulo1 = tipoVta === '02' ? 'Pedido no. '+DocEntry+' (Transferencia gratuita).' : 'Pedido no. '+DocEntry;
-      let titulo2 = tipoVta === '02' ? 'Pedido no. '+DocEntry+' (Transferencia gratuita en proceso de autorización).' : 'Pedido no. '+DocEntry+'(En proceso de autorización).';
-      let titulo = des === 'Drafts' ? titulo2 : titulo1;
+    let tipoVta = "";
+    let des = "";
+
+    let DocEntry =
+      des === "Drafts"
+        ? docNumResponse[0].DocNum + "-" + docNumResponse[0].DocEntry
+        : docNumResponse[0].DocNum;
+
+    let titulo1 =
+      tipoVta === "02"
+        ? "Pedido no. " + DocEntry + " (Transferencia gratuita)."
+        : "Pedido no. " + DocEntry;
+    let titulo2 =
+      tipoVta === "02"
+        ? "Pedido no. " +
+          DocEntry +
+          " (Transferencia gratuita en proceso de autorización)."
+        : "Pedido no. " + DocEntry + "(En proceso de autorización).";
+    let titulo = des === "Drafts" ? titulo2 : titulo1;
 
     let body: any;
-    body = '';
+    body = "";
     // data.items.map((item: any) =>{
     //   item.Discount = parseInt(item.Discount);
     //   if (isNaN(item.Discount)) {
@@ -349,222 +405,244 @@ export async function createDocuments(request: Request, response: Response) {
     //       <td>${item.ItemCode}</td>
     //       <td>${item.ItemName}</td>
     //       <td style="text-align: center;" >${item.quantity}</td>
-    //       <td>$ ${parseFloat(item.Price).toFixed(2)}</td>              
+    //       <td>$ ${parseFloat(item.Price).toFixed(2)}</td>
     //       <td>$ ${Number(Preciototal).toFixed(2)}</td>
     //       <td style="text-align: right;">${Number(item.weight * item.quantity).toFixed(2)} KG</td>`;
     //     //return body;
     //   });
     // body += '</tr>'
-    data.items.map((item: any) =>{
+    data.items.map((item: any) => {
       item.Discount = parseInt(item.Discount);
       if (isNaN(item.Discount)) {
         item.Discount = 0;
       }
-      let Preciototal = Number(item.priceTax * item.quantity - (item.priceTax * item.quantity * (item.Discount / 100)));
+      let Preciototal = Number(
+        item.priceTax * item.quantity -
+          item.priceTax * item.quantity * (item.Discount / 100)
+      );
       tax = item.taxRate;
-      Subtotal += tipoVta === '02' ? 0 : Preciototal;
+      Subtotal += tipoVta === "02" ? 0 : Preciototal;
       totalpesoNeto += Number(item.weight * item.quantity);
-        body += `
+      body += `
         <tr>
           <td>${item.ItemCode}</td>
           <td>${item.ItemName}</td>
           <td style="text-align: center;" >${item.quantity}</td>
           <td>$ ${parseFloat(item.Price).toFixed(2)}</td>              
           <td>$ ${Number(Preciototal).toFixed(2)}</td>`;
-        return body;
-      });
-      // if(Object.keys(responseFlete).length > 0){
-      //   body += `
-      //   <tr>
-      //     <td>${responseFlete.ItemCode}</td>
-      //     <td>${responseFlete.ItemName}</td>
-      //     <td style="text-align: center;" >1</td>
-      //     <td>$ ${parseFloat(responseFlete.Price).toFixed(2)}</td>              
-      //     <td>$ ${Number(responseFlete.Price).toFixed(2)}</td>`;
-      // }
-      // if(insuranceObject){
-        // body += `
-        // <tr>
-        //   <td>${insuranceObject.ItemCode}</td>
-        //   <td>${insuranceObject.ItemCode}</td>
-        //   <td style="text-align: center;" >1</td>
-        //   <td>$ ${parseFloat(maniobrasdos).toFixed(2)}</td>              
-        //   <td>$ ${Number(maniobrasdos).toFixed(2)}</td>`;
-      // }
-    let maniobras = 0// Object.keys(responseFlete).length > 0 ? responseFlete.Price : 0;
+      return body;
+    });
+    // if(Object.keys(responseFlete).length > 0){
+    //   body += `
+    //   <tr>
+    //     <td>${responseFlete.ItemCode}</td>
+    //     <td>${responseFlete.ItemName}</td>
+    //     <td style="text-align: center;" >1</td>
+    //     <td>$ ${parseFloat(responseFlete.Price).toFixed(2)}</td>
+    //     <td>$ ${Number(responseFlete.Price).toFixed(2)}</td>`;
+    // }
+    // if(insuranceObject){
+    // body += `
+    // <tr>
+    //   <td>${insuranceObject.ItemCode}</td>
+    //   <td>${insuranceObject.ItemCode}</td>
+    //   <td style="text-align: center;" >1</td>
+    //   <td>$ ${parseFloat(maniobrasdos).toFixed(2)}</td>
+    //   <td>$ ${Number(maniobrasdos).toFixed(2)}</td>`;
+    // }
+    let maniobras = 0; // Object.keys(responseFlete).length > 0 ? responseFlete.Price : 0;
 
-    Subtotal = Subtotal //+ maniobras;
-    Subtotal = Subtotal //+ maniobrasdos;
-    Subtotal = discPrcnt ? Subtotal - (Subtotal * discPrcnt / 100)  : Subtotal;
-    let htmlDiscPrcnt:any = '';
-    if(discPrcnt){
+    Subtotal = Subtotal; //+ maniobras;
+    Subtotal = Subtotal; //+ maniobrasdos;
+    Subtotal = discPrcnt ? Subtotal - (Subtotal * discPrcnt) / 100 : Subtotal;
+    let htmlDiscPrcnt: any = "";
+    if (discPrcnt) {
       htmlDiscPrcnt = `<tr>
       <td colspan="4" style="text-align: right; color: black;">Descuento:</td>
       <th colspan="6" style="text-align: left; background-color: #FFF; color: black" > ${discPrcnt}%</th>
-    </tr>`
+    </tr>`;
     }
-    body += '</tr>'
-    let Igv = tipoVta === '02' ? 0 : tax * Subtotal / 100;
-    Total = tipoVta === '02' ? 0 : Subtotal + Igv;
-    let borr = 'Documento en proceso de autorización con No. ' +docNumResponse[0].DocNum+'-'+isDraft;
-    let order = 'Se créo correctamente el documento con el No. '+docNumResponse[0].DocNum;
-    let respuesta = autorizaciones.length > 0 ? borr : order; //  
+    body += "</tr>";
+    let Igv = tipoVta === "02" ? 0 : (tax * Subtotal) / 100;
+    Total = tipoVta === "02" ? 0 : Subtotal + Igv;
+    let borr =
+      "Documento en proceso de autorización con No. " +
+      docNumResponse[0].DocNum +
+      "-" +
+      isDraft;
+    let order =
+      "Se créo correctamente el documento con el No. " +
+      docNumResponse[0].DocNum;
+    let respuesta = autorizaciones.length > 0 ? borr : order; //
 
-    let mensaje = "Te informamos que tu Pedido se encuentra en estado pendiente.";
-    responseModel.message = 'orden creada';
+    let mensaje =
+      "Te informamos que tu Pedido se encuentra en estado pendiente.";
+    responseModel.message = "orden creada";
     responseModel.status = 1;
-    responseModel.data = {docNum: respuesta};
+    responseModel.data = { docNum: respuesta };
     let orderMail = docNumResponse[0].DocNum;
 
-    let infoEmail =  {
+    let infoEmail = {
       orderMail: orderMail,
       nameMail: nameMail,
-      mensaje:mensaje,
+      mensaje: mensaje,
       body: body,
-      Subtotal:Subtotal,
+      Subtotal: Subtotal,
       totalpesoNeto: totalpesoNeto,
-      address: address || '',
-      htmlDiscPrcnt
-    }
+      address: address || "",
+      htmlDiscPrcnt,
+    };
 
     let msghtml = contextEmailDaysPlus(infoEmail);
     // Validacion de tipo de credito
-    
+
     // HAcer la incersion a la tabla de movimientos de punto
-      
+
     let dataMail = await EmailProcedure("getOrder");
     ////console.log(dataMail);
     let bcc;
-    if (dataMail[0].validateOrderBCC === 1){
+    if (dataMail[0].validateOrderBCC === 1) {
       bcc = dataMail[0].orderBCC;
-    }else{
-      bcc="";
+    } else {
+      bcc = "";
     }
     let subject = dataMail[0].orderSubject;
-    let sendMail = await helpers.sendEmail( mailToCliente + "desarrollo3@fmbsolutions.mx","",bcc,subject,msghtml,null );
+    let sendMail = await helpers.sendEmail(
+      mailToCliente + "desarrollo3@fmbsolutions.mx",
+      "",
+      bcc,
+      subject,
+      msghtml,
+      null
+    );
     response.json(responseModel);
-  }else{
+  } else {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const sh = new SchemaService ();
+    const sh = new SchemaService();
     let serie;
-    await SeriesProcedure('getSerie').then(result => {
+    await SeriesProcedure("getSerie").then((result) => {
       serie = result[0].serieDefault;
     });
     const responseModel = new ResponseModel();
 
     let shoppingCart: any = await getShoppingCart(request, response, true);
     //obtiene lo que trae el arreglo del carrito
-    
-    if(!shoppingCart.status){
-        responseModel.message = 'Ocurrió un problema al obtener el carrito de compras para generar el pedido';
-        response.json(responseModel);
-        return;
+
+    if (!shoppingCart.status) {
+      responseModel.message =
+        "Ocurrió un problema al obtener el carrito de compras para generar el pedido";
+      response.json(responseModel);
+      return;
     }
 
-    let prices :any;
-    
-    let tipoVta = '01';
+    let prices: any;
+
+    let tipoVta = "01";
     let cardCode = CardCode;
-    let addressKey = '';
-    let billKey = '';
-    let comments = '';
+    let addressKey = "";
+    let billKey = "";
+    let comments = "";
     let docCurrency = currency;
     //Email del cliente
     //let mailToCliente = U_Handel_Email;
     let nameMail = CardName;
-    let totalMail = '0';
+    let totalMail = "0";
 
-    if(profile_id){
-      if(address.address===bill.address){
+    if (profile_id) {
+      if (address.address === bill.address) {
         addressKey = address.address;
         billKey = "";
-      }else{
+      } else {
         addressKey = address.address;
         billKey = bill.address;
       }
-    }else{
-        comments = `
+    } else {
+      comments = `
         nombre: ${address.name}, email: ${address.email}, telefono: ${address.phone},
         calle: ${address.street}, colonia: ${address.block}, municipio: ${address.city},código postal: ${address.cp},
         estado: ${address.state}, pais: ${address.country},
         `;
     }
 
-    let today:any = new Date();
-		today = moment(today).format('YYYYMMDD');
-    let fecha = moment(today).format('YYYY-MM-DD');
+    let today: any = new Date();
+    today = moment(today).format("YYYYMMDD");
+    let fecha = moment(today).format("YYYY-MM-DD");
     // fecha = fecha.substr(0,7);
     //WAREHOUSE DEL DOCUMENTO
-    let resultWareHouse : any= []// await WareHouseProcedure('U_SYP_RICO_CCANAL', 'U_SYP_RICO_CSUCUR');
-    
+    let resultWareHouse: any = []; // await WareHouseProcedure('U_SYP_RICO_CCANAL', 'U_SYP_RICO_CSUCUR');
+
     //resultWareHouse = resultWareHouse[0].U_SYP_RICO_CODALM;
-    let articulos: any = [];//INSERT EN AUTORIZACION   
-		let items: any = [];
+    let articulos: any = []; //INSERT EN AUTORIZACION
+    let items: any = [];
     items = shoppingCart.data.shoppingCart;
-    
+
     //Descuentos
     let model: ProductsModel = new ProductsModel();
 
-    model.action = 'searchByKey';
+    model.action = "searchByKey";
     model.business = db_name;
     model.cardCode = CardCode;
 
-    let DocumentLines: any =[];
-    let datos : any;
-        
-		items.map((item: any) =>{    
-			let lines ={
-				ItemCode:item.ItemCode,
+    let DocumentLines: any = [];
+    let datos: any;
+
+    items.map((item: any) => {
+      let lines = {
+        ItemCode: item.ItemCode,
         Quantity: item.quantity,
-        Currency : item.currency,
+        Currency: item.currency,
         WarehouseCode: item.WhsCode,
-				// TaxCode: 'IVAV16',
+        // TaxCode: 'IVAV16',
         // Price: item.Price,
         //Debe ser Y si en la linea es bonificacion
-        //U_SYP_RICO_BONIF: 'N', 
-        //Si es bonificaicon tYES solo en la linea que es y si es TRANSFERENCIA GRATUITA ES EN TODAS LAS LINEAS       
+        //U_SYP_RICO_BONIF: 'N',
+        //Si es bonificaicon tYES solo en la linea que es y si es TRANSFERENCIA GRATUITA ES EN TODAS LAS LINEAS
         // TaxOnly: 'tNO',
-			}
+      };
       DocumentLines.push(lines);
-      articulos.push({'ItemCode': item.ItemCode, 'quantity': parseInt(item.quantity)});
+      articulos.push({
+        ItemCode: item.ItemCode,
+        quantity: parseInt(item.quantity),
+      });
     });
-     articulos = JSON.stringify(articulos);
+    articulos = JSON.stringify(articulos);
     //#########################################itemsGift##############################################
     let stockBonificacion = false;
-    let articulosbonificacion = '';
-    let quiebreStock : any =[];
-       
-      //----------------------------
-      
-     let DocSubtotal = 0;
-     let DocTotal = 0; 
-     let Doctax = 0;
-     items.map((item: any) =>{
-       item.Discount = parseInt(item.Discount);
-       if (isNaN(item.Discount)) {
-         item.Discount = 0;
-     }
-       let Preciototal = Number(item.Price * item.quantity - (item.Price * item.quantity * (item.Discount / 100)));
-       Doctax = item.taxRate;
-       DocSubtotal += tipoVta === '02' ? 0 : Preciototal;
-     });
+    let articulosbonificacion = "";
+    let quiebreStock: any = [];
 
-     let DocIgv = tipoVta === '02' ? 0 : Doctax * DocSubtotal / 100;
-     DocTotal = tipoVta === '02' ? 0 : DocSubtotal + DocIgv;
+    //----------------------------
 
-    
+    let DocSubtotal = 0;
+    let DocTotal = 0;
+    let Doctax = 0;
+    items.map((item: any) => {
+      item.Discount = parseInt(item.Discount);
+      if (isNaN(item.Discount)) {
+        item.Discount = 0;
+      }
+      let Preciototal = Number(
+        item.Price * item.quantity -
+          item.Price * item.quantity * (item.Discount / 100)
+      );
+      Doctax = item.taxRate;
+      DocSubtotal += tipoVta === "02" ? 0 : Preciototal;
+    });
 
-  ////PROCESO DE AUTORIZACION QUERY 
+    let DocIgv = tipoVta === "02" ? 0 : (Doctax * DocSubtotal) / 100;
+    DocTotal = tipoVta === "02" ? 0 : DocSubtotal + DocIgv;
+
+    ////PROCESO DE AUTORIZACION QUERY
     // let ModelAutorization : any;
     // let IdAutorization : any;
     // let NameAutorization : any;
-    
-    // //let resul = await AutorizationProcedure();  
+
+    // //let resul = await AutorizationProcedure();
     // let ListAutorizations = {
     //   actions : 'ALL'
     // }
-    // let resul = await AutorizacionesProcedure(ListAutorizations);    
-    
+    // let resul = await AutorizacionesProcedure(ListAutorizations);
+
     let creditLimit = false;
     // let borrador : any;
     // let dataResult = {};
@@ -576,7 +654,7 @@ export async function createDocuments(request: Request, response: Response) {
     //       let numAutorizacion = {
     //         actions : '1546',
     //         param1 : CardCode,
-    //         param2 : total, 
+    //         param2 : total,
     //         param3 : '',
     //       }
     //       let res = await AutorizacionesProcedure(numAutorizacion)
@@ -602,478 +680,549 @@ export async function createDocuments(request: Request, response: Response) {
     //             Correo : autorizarion.E_Mail
     //         }
     //         autorizaciones.push(dataResult);
-    //     }              
-    // }     
-    let autorizaciones :any = []; // await AuthorizationDocuments(request, response);
+    //     }
+    // }
+    let autorizaciones: any = []; // await AuthorizationDocuments(request, response);
     // let auto = autorizaciones ? autorizaciones : '';
 
-    let des  = autorizaciones.length > 0 ? 'Drafts' : 'Orders';//  Quotations  
-    let dire = bill.street+'-'+bill.block || '' + '-' + bill.city || ''+ '-' + bill.county || '';
+    let des = autorizaciones.length > 0 ? "Drafts" : "Orders"; //  Quotations
+    let dire =
+      bill.street + "-" + bill.block ||
+      "" + "-" + bill.city ||
+      "" + "-" + bill.county ||
+      "";
     let datosCliente = {
-      actions : 'DATOS',
-      param1 : CardCode,
-      param2 : '', 
-      param3 : '',
-    }
+      actions: "DATOS",
+      param1: CardCode,
+      param2: "",
+      param3: "",
+    };
     let CorreoCliente = await AutorizacionesProcedure(datosCliente);
     ///////////////////DATA//////////////////////
     let data = {
-			DocDueDate: fecha,
+      DocDueDate: fecha,
       DocDate: fecha,
       TaxDate: fecha,
-			CardCode: CardCode,
-      U_FMB_Handel_PKG: `${IdPackge || ''}|${packageKeySelect||''}|${convenio ||''}`,
-      U_FMB_Handel_NUCN : convenio || '',
-      U_Doc_Ecommerce: 'Y',
-			// SalesPersonCode: '91',
-			Series: serie,
-			Comments: comment,//"Documento Prueba_Handel de " + CardCode,
-			ShipToCode: addressKey,
+      CardCode: CardCode,
+      U_FMB_Handel_PKG: `${IdPackge || ""}|${packageKeySelect || ""}|${
+        convenio || ""
+      }`,
+      U_FMB_Handel_NUCN: convenio || "",
+      U_Doc_Ecommerce: "Y",
+      // SalesPersonCode: '91',
+      Series: serie,
+      Comments: comment, //"Documento Prueba_Handel de " + CardCode,
+      ShipToCode: addressKey,
       ShipFrom: addressKey,
-			PayToCode: bill.address,
+      PayToCode: bill.address,
       // PaymentGroupCode : tipoVta === '02' ? -1 : CorreoCliente[0].GroupNum,
       // U_FMB_StockBonificacion : stockBonificacion ? "1" : "0",
       // U_FMB_ArticulosBonificacion : stockBonificacion ? articulosbonificacion :' ',
       // U_FMB_Handel_Creador : creator,
-      DocObjectCode: 17,      
+      DocObjectCode: 17,
       //Descuento
-      DiscountPercent: discPrcnt || 0,		
-			DocumentLines,
-			// AddressExtension: {
-			// 	ShipToStreet: address.street,
-			// 	ShipToBlock: "",
-			// 	ShipToCity: address.city,
-			// 	ShipToCounty: "",
-			// 	ShipToState: address.state,
-			// 	ShipToCountry: address.country,
-			// 	ShipToAddressType: "S",
-			// 	BillToStreet: bill.street,
+      DiscountPercent: discPrcnt || 0,
+      DocumentLines,
+      // AddressExtension: {
+      // 	ShipToStreet: address.street,
+      // 	ShipToBlock: "",
+      // 	ShipToCity: address.city,
+      // 	ShipToCounty: "",
+      // 	ShipToState: address.state,
+      // 	ShipToCountry: address.country,
+      // 	ShipToAddressType: "S",
+      // 	BillToStreet: bill.street,
       //   BillToBlock: bill.block,
       //   BillToCity: bill.city,
       //   BillToCounty: bill.county,
       //   BillToState: bill.state,
       //   BillToCountry: bill.country,
-			// 	BillToAddressType: "bo_BillTo"
-			// }			
+      // 	BillToAddressType: "bo_BillTo"
+      // }
     };
     ///////////////////DATA//////////////////////
     // console.log('con<',data);
-    
-    let ordersResponse = await sh.NewOrderService(des,data);
-    // let respuestsa = await sh.getDocument("Orders",110913); 
-        // console.log("con<<<", respuestsa)
-        // return;
-        if(ordersResponse.message){
-            let error = ordersResponse.message.error.message.value;
-            logger.error("OrdersController => CreateDocument ",error);
-            responseModel.message = error;///'Ocurrio un error al generar tu pedido. intentalo nuevamente (estado de la orden)';
-            response.json(responseModel);
-            return;
-        }
-        // let CorreoCliente = await Autorization('DATOS',CardCode,'','')
-        let mensajeCond = CorreoCliente[0].PymntGroup;
-        let mailToCliente = CorreoCliente[0].E_Mail;
-        let Vendedor = CorreoCliente[0].Email;
-        let men = '';
-        
-        if(mensajeCond.substr(0,7) === 'CONTADO'){
-          men = 'Recuerda que si no cancelas dentro de las 24 horas siguientes tu pedido se anulara.'
-        }
-        else{
-          men = '';
-        }
-        let DocNum = des === 'Drafts' ? ordersResponse.DocNum+'-'+ordersResponse.DocEntry : ordersResponse.DocNum;
 
-        let trans = tipoVta === '01' ? 'NORMAL' : 'TRANSFERENCIA GRATUITA';
-        let creditoExc = creditLimit ? 'por exceder el límite de crédito'  : '';
-        let borr = 'Documento en proceso de autorización con No. ' +DocNum;
-        let order = 'Se créo correctamente el documento con el No. '+DocNum;
-        
-        let respuesta = des === 'Drafts' ? borr : order;
+    let ordersResponse = await sh.NewOrderService(des, data);
+    console.log("DARWIN>>vordersResponseordersResponse", ordersResponse);
+    // let respuestsa = await sh.getDocument("Orders",110913);
+    // console.log("con<<<", respuestsa)
+    // return;
+    if (ordersResponse.message) {
+      let error = ordersResponse.message.error.message.value;
+      logger.error("OrdersController => CreateDocument ", error);
+      responseModel.message = error; ///'Ocurrio un error al generar tu pedido. intentalo nuevamente (estado de la orden)';
+      response.json(responseModel);
+      return;
+    }
+    // let CorreoCliente = await Autorization('DATOS',CardCode,'','')
+    let mensajeCond = CorreoCliente[0].PymntGroup;
+    let mailToCliente = CorreoCliente[0].E_Mail;
+    let Vendedor = CorreoCliente[0].Email;
+    let men = "";
 
-        responseModel.message = '';
-        responseModel.status = 1;
-        responseModel.data = {docNum: respuesta}
+    if (mensajeCond.substr(0, 7) === "CONTADO") {
+      men =
+        "Recuerda que si no cancelas dentro de las 24 horas siguientes tu pedido se anulara.";
+    } else {
+      men = "";
+    }
+    let DocNum =
+      des === "Drafts"
+        ? ordersResponse.DocNum + "-" + ordersResponse.DocEntry
+        : ordersResponse.DocNum;
 
-        let hoy = new Date();
-        var Hora = hoy.getHours();
-        var Min = hoy.getMinutes();
-        let CorreoAutorizadores = '';
+    let trans = tipoVta === "01" ? "NORMAL" : "TRANSFERENCIA GRATUITA";
+    let creditoExc = creditLimit ? "por exceder el límite de crédito" : "";
+    let borr = "Documento en proceso de autorización con No. " + DocNum;
+    let order = "Se créo correctamente el documento con el No. " + DocNum;
 
-        let isDraft = ordersResponse.DocEntry;
-        let file: any[] = [];
-        autorizaciones.map(async (datos: { autoName: any; nameCond: any; Correo: string; wtm: any; autoId: any; wst: any; MaxReqr: any; MaxRejReqr: any; }) =>{
-          CorreoAutorizadores += datos.Correo+",";
-          
-              setTimeout(async () =>{              
-                  let wtmCode = file.indexOf(datos.wtm);
-                  if(wtmCode == -1){
-                    try {
-                      file.push(datos.wtm);
-                      let respon = await sh.statements(`INSERT INTO "_E_HANDEL_B2C"."FMB_OWDD" 
+    let respuesta = des === "Drafts" ? borr : order;
+
+    responseModel.message = "";
+    responseModel.status = 1;
+    responseModel.data = { docNum: respuesta };
+
+    let hoy = new Date();
+    var Hora = hoy.getHours();
+    var Min = hoy.getMinutes();
+    let CorreoAutorizadores = "";
+
+    let isDraft = ordersResponse.DocEntry;
+    let file: any[] = [];
+    autorizaciones.map(
+      async (datos: {
+        autoName: any;
+        nameCond: any;
+        Correo: string;
+        wtm: any;
+        autoId: any;
+        wst: any;
+        MaxReqr: any;
+        MaxRejReqr: any;
+      }) => {
+        CorreoAutorizadores += datos.Correo + ",";
+
+        setTimeout(async () => {
+          let wtmCode = file.indexOf(datos.wtm);
+          if (wtmCode == -1) {
+            try {
+              file.push(datos.wtm);
+              let respon =
+                await sh.statements(`INSERT INTO "_E_HANDEL_B2C"."FMB_OWDD" 
                       ("U_WtmCode","U_OwnerID","U_DocEntry","U_ObjType","CartShop","U_DocDate","U_CurrStep","U_Status","U_Remarks","U_UserSign","U_CreateDate","U_CreateTime","U_IsDraft","U_MaxReqr","U_MaxRejReqr") 
-                      VALUES (${datos.wtm},${datos.autoId},${isDraft},'17','${articulos}','${today}',${datos.wst},'W','${datos.nameCond}','1','${today}',${Hora+''+Min},'Y',${datos.MaxReqr},${datos.MaxRejReqr})`);   
-                      
-                    }                      
-                    catch (error) {
-                        logger.error("Insert FMB_OWDD:", error)
-                    }                       
-                  }              
-              await sh.statements(`INSERT INTO "_E_HANDEL_B2C"."FMB_WDD1" 
+                      VALUES (${datos.wtm},${
+                  datos.autoId
+                },${isDraft},'17','${articulos}','${today}',${datos.wst},'W','${
+                  datos.nameCond
+                }','1','${today}',${Hora + "" + Min},'Y',${datos.MaxReqr},${
+                  datos.MaxRejReqr
+                })`);
+            } catch (error) {
+              logger.error("Insert FMB_OWDD:", error);
+            }
+          }
+          await sh.statements(`INSERT INTO "_E_HANDEL_B2C"."FMB_WDD1" 
                      ("U_WddCode","U_StepCode","U_UserID","U_Status","U_Remarks","U_UserSign","U_CreateDate","U_CreateTime","U_UpdateDate","U_UpdateTime")
-                      VALUES (${isDraft},${datos.wst},${datos.autoId},'W','${datos.nameCond}','1','${today}',${Hora+''+Min},'${today}',1)`);    
-              },500)
-              
-          });
+                      VALUES (${isDraft},${datos.wst},${datos.autoId},'W','${
+            datos.nameCond
+          }','1','${today}',${Hora + "" + Min},'${today}',1)`);
+        }, 500);
+      }
+    );
 
-        let Subtotal = 0;
-        let Total = 0; 
-        let tax = 0;
-        let totalpesoNeto = 0;
-        let mensajebonificacion = stockBonificacion ? 'El producto en Bonificación no cuenta con stock disponible: ' : '';
-        let articulosbonifi = stockBonificacion ? quiebreStock : '';
-        
-        let DocEntry = des === 'Drafts' ? ordersResponse.DocNum+'-'+ordersResponse.DocEntry :  ordersResponse.DocNum;
+    let Subtotal = 0;
+    let Total = 0;
+    let tax = 0;
+    let totalpesoNeto = 0;
+    let mensajebonificacion = stockBonificacion
+      ? "El producto en Bonificación no cuenta con stock disponible: "
+      : "";
+    let articulosbonifi = stockBonificacion ? quiebreStock : "";
 
-        let titulo1 = tipoVta === '02' ? 'Pedido no. '+DocEntry+' (Transferencia gratuita).' : 'Pedido no. '+DocEntry;
-        let titulo2 = tipoVta === '02' ? 'Pedido no. '+DocEntry+' (Transferencia gratuita en proceso de autorización).' : 'Pedido no. '+DocEntry+'(En proceso de autorización).';
-        let titulo = des === 'Drafts' ? titulo2 : titulo1;
-        let body: any;
-        
-        body = '';
-        ordersResponse.DocumentLines.map((item: any) =>{
-          let Preciototal = Number(item.PriceAfterVAT * item.Quantity);
-          tax = item.TaxTotal;
-          Subtotal += Preciototal;
-          totalpesoNeto += Number(item.weight * item.Quantity);
-            body += `
+    let DocEntry =
+      des === "Drafts"
+        ? ordersResponse.DocNum + "-" + ordersResponse.DocEntry
+        : ordersResponse.DocNum;
+
+    let titulo1 =
+      tipoVta === "02"
+        ? "Pedido no. " + DocEntry + " (Transferencia gratuita)."
+        : "Pedido no. " + DocEntry;
+    let titulo2 =
+      tipoVta === "02"
+        ? "Pedido no. " +
+          DocEntry +
+          " (Transferencia gratuita en proceso de autorización)."
+        : "Pedido no. " + DocEntry + "(En proceso de autorización).";
+    let titulo = des === "Drafts" ? titulo2 : titulo1;
+    let body: any;
+
+    body = "";
+    ordersResponse.DocumentLines.map((item: any) => {
+      let Preciototal = Number(item.PriceAfterVAT * item.Quantity);
+      tax = item.TaxTotal;
+      Subtotal += Preciototal;
+      totalpesoNeto += Number(item.weight * item.Quantity);
+      body += `
             <tr>
               <td>${item.ItemCode}</td>
               <td>${item.ItemDescription}</td>
               <td style="text-align: center;" >${item.Quantity}</td>
               <td>$ ${parseFloat(item.Price).toFixed(2)}</td>              
               <td>$ ${Number(Preciototal).toFixed(2)}</td>`;
-            return body;
-          });
-        body += '</tr>'
+      return body;
+    });
+    body += "</tr>";
 
-        Subtotal = discPrcnt ? Subtotal - (Subtotal * discPrcnt / 100)  : Subtotal;
-          
-        let htmlDiscPrcnt:any = '';
-        if(discPrcnt){
-          htmlDiscPrcnt = `<tr>
+    Subtotal = discPrcnt ? Subtotal - (Subtotal * discPrcnt) / 100 : Subtotal;
+
+    let htmlDiscPrcnt: any = "";
+    if (discPrcnt) {
+      htmlDiscPrcnt = `<tr>
           <td colspan="4" style="text-align: right; color: black;">Descuento:</td>
           <th colspan="6" style="text-align: left; background-color: #FFF; color: black" > ${discPrcnt}%</th>
-        </tr>`
-        }
-        let Igv = tipoVta === '02' ? 0 : tax * Subtotal / 100;
-        Total = tipoVta === '02' ? 0 : Subtotal + Igv;
-        let mensaje = '';
-        if(creditLimit){
-          mensaje = 'Le informamos que su pedido ha excedido su límite de crédito disponible, favor de comunicarse con su asesor de ventas.';
-        }else{
-          mensaje = 'Nos complace informarle que su pedido ha sido correctamente registrado y será atendido a la brevedad.';
-        }
+        </tr>`;
+    }
+    let Igv = tipoVta === "02" ? 0 : (tax * Subtotal) / 100;
+    Total = tipoVta === "02" ? 0 : Subtotal + Igv;
+    let mensaje = "";
+    if (creditLimit) {
+      mensaje =
+        "Le informamos que su pedido ha excedido su límite de crédito disponible, favor de comunicarse con su asesor de ventas.";
+    } else {
+      mensaje =
+        "Nos complace informarle que su pedido ha sido correctamente registrado y será atendido a la brevedad.";
+    }
 
-        let infoEmail =  {
-          orderMail: ordersResponse.DocNum,
-          nameMail: nameMail,
-          mensaje:mensaje,
-          body: body,
-          Subtotal:Subtotal,
-          totalpesoNeto: totalpesoNeto,
-          address: address || '',
-          htmlDiscPrcnt
-        }
+    let infoEmail = {
+      orderMail: ordersResponse.DocNum,
+      nameMail: nameMail,
+      mensaje: mensaje,
+      body: body,
+      Subtotal: Subtotal,
+      totalpesoNeto: totalpesoNeto,
+      address: address || "",
+      htmlDiscPrcnt,
+    };
 
-        let msghtml = contextEmailDaysPlus(infoEmail);
+    let msghtml = contextEmailDaysPlus(infoEmail);
 
+    let dataMail = await EmailProcedure("getOrder");
 
-        let dataMail = await EmailProcedure("getOrder");
+    let bcc;
+    if (dataMail[0].validateOrderBCC === 1) {
+      bcc = dataMail[0].orderBCC;
+    } else {
+      bcc = "";
+    }
+    let subject = dataMail[0].orderSubject;
+    let correosNuevos = "";
 
-        let bcc;
-        if (dataMail[0].validateOrderBCC === 1){
-          bcc = dataMail[0].orderBCC;
-        }else{
-          bcc="";
-        }
-        let subject = dataMail[0].orderSubject;
-        let correosNuevos = '';
+    correosNuevos = CorreoAutorizadores + Vendedor;
 
-        correosNuevos = CorreoAutorizadores+Vendedor;
+    let sendMail = await helpers.sendEmail(
+      mailToCliente,
+      correosNuevos + ",tlm01@ircomx.com",
+      "",
+      subject,
+      msghtml,
+      null
+    );
 
-        let sendMail = await helpers.sendEmail(mailToCliente,correosNuevos +',tlm01@ircomx.com',"",subject,msghtml,null );
-
-        response.json(responseModel);
+    response.json(responseModel);
   }
 }
 export async function SaveFileOV(request: Request, response: Response) {
-  const {sapConfig} = response.locals.business;
+  const { sapConfig } = response.locals.business;
   const responseModel = new ResponseModel();
   var form = new formidable.IncomingForm();
   let GlobalSap = JSON.parse(global.sap_config);
   try {
     form.parse(request, async function (err: any, fields: any, files: any) {
-      if(!err) {
-        
+      if (!err) {
         // let cv = files.file.name;
         // let lastName;
         // let ext = cv.lastIndexOf(".");
         // let validateExt = cv.substring(ext, cv.length);
-        
+
         // let fileName = moment().format("YYYY-MM-DD_HH-mm").toString() + "_OC_" + files.file.name;
         // fileNameMail = files.file.name;
         let route = GlobalSap[0].rutaATC;
         let fullRouteName = route + files.archivo.name;
-        await fs.move(files.archivo.path, fullRouteName)
-        .then(async () => {
-          //117 cambios dudoso
-          responseModel.message = 'orden creada';
-          responseModel.status = 1;
-          response.json(responseModel)
-          //va pa arriba
-          let newFiles = {
-            pdfName: files.archivo.name ,
-          };
-          console.log('117>newFiles',newFiles);
-          
-          
-        })
-        .catch((err:any) => {
-          console.log('con>err',err)
-          responseModel.message = 'Error al cargar el documento, el nombre de este documento ya fue registrado';
-          responseModel.status = 0;
-          response.json(responseModel)
-        })
-        
-       
-      }else{
-        responseModel.message = 'Error al cargar el documento';
+        await fs
+          .move(files.archivo.path, fullRouteName)
+          .then(async () => {
+            //117 cambios dudoso
+            responseModel.message = "orden creada";
+            responseModel.status = 1;
+            response.json(responseModel);
+            //va pa arriba
+            let newFiles = {
+              pdfName: files.archivo.name,
+            };
+            console.log("117>newFiles", newFiles);
+          })
+          .catch((err: any) => {
+            console.log("con>err", err);
+            responseModel.message =
+              "Error al cargar el documento, el nombre de este documento ya fue registrado";
+            responseModel.status = 0;
+            response.json(responseModel);
+          });
+      } else {
+        responseModel.message = "Error al cargar el documento";
         responseModel.status = 0;
-        response.json(responseModel)
+        response.json(responseModel);
       }
-
     });
-    
   } catch (error) {
-    logger.error("SaveFileOV->>"+error);
-    responseModel.message = 'Error al cargar el documento';
+    logger.error("SaveFileOV->>" + error);
+    responseModel.message = "Error al cargar el documento";
     responseModel.status = 0;
-    response.json(responseModel)
+    response.json(responseModel);
   }
 }
 
 export async function orders(request: Request, response: Response) {
-    const {db_name, localLanguage} = response.locals.business;
-    const {profile_id} = response.locals.user;
-    const {CardCode} = response.locals.user;
-    const { fechaInicio, fechaFinal } = request.params;
-
-    const responseModel = new ResponseModel();
-    if(!profile_id){
-        responseModel.message = "no tienes permiso de realizar esta acción";
-        responseModel.data = [];
-    }
-
-    try {
-        let ordersModel: OrdersModel = new OrdersModel();
-        let doc = getTypeDocument('17');
-        //Fecha condicional desde donde aparecen los pedidos
-        // let initialDate = moment(new Date(2020,1,1)).format('YYYYMMDD');
-        // let finalDate = moment(new Date()).format('YYYYMMDD');
-
-        ordersModel.action = 'getOrders';
-        ordersModel.business = db_name;
-        ordersModel.table = doc.table;
-        ordersModel.cardCode = CardCode;
-        ordersModel.initialDate = fechaInicio;
-        ordersModel.finalDate = fechaFinal;
-
-        let responseList = await OrdersProcedure(ordersModel);
-
-        
-        responseList.map( (order:any) => {
-            order.localLanguage = localLanguage;
-           if(order.DocCur === 'MXP'){
-               order.DocCur = 'MXN';
-           }
-           //Ajuste de fecha con minutos y zona horaria
-           let date = new Date(order.TaxDate);
-           date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-           order.TaxDate = moment(new Date(date)).format('YYYYMMDD'); 
-        });
-
-        responseModel.message = "lista de pedidos";
-        responseModel.status = 1;
-        responseModel.data = responseList || [];
-        response.json(responseModel);
-    }catch (e) {
-      logger.error(e);
-        responseModel.message = "ocurrio un error al traer la lista de pedidos";
-        responseModel.data =  [];
-        response.json(responseModel);
-    }
-}
-
-export async function ordersSeller(request: Request, response: Response) {
-  const {db_name, localLanguage} = response.locals.business;
-  const {profile_id} = response.locals.user;
-  const {CardCode} = response.locals.user;
-  const {salesPrson} = request.body;
+  const { db_name, localLanguage } = response.locals.business;
+  const { profile_id } = response.locals.user;
+  const { CardCode } = response.locals.user;
+  const { fechaInicio, fechaFinal } = request.params;
 
   const responseModel = new ResponseModel();
-  if(!profile_id){
-      responseModel.message = "no tienes permiso de realizar esta acción";
-      responseModel.data = [];
+  if (!profile_id) {
+    responseModel.message = "no tienes permiso de realizar esta acción";
+    responseModel.data = [];
   }
 
   try {
-      let ordersModel: OrdersModel = new OrdersModel();
-      let doc = getTypeDocument('17');
-      //Fecha condicional desde donde aparecen los pedidos
-      let initialDate = moment(new Date(2020,1,1)).format('YYYYMMDD');
-      let finalDate = moment(new Date()).format('YYYYMMDD');
+    let ordersModel: OrdersModel = new OrdersModel();
+    let doc = getTypeDocument("17");
+    //Fecha condicional desde donde aparecen los pedidos
+    // let initialDate = moment(new Date(2020,1,1)).format('YYYYMMDD');
+    // let finalDate = moment(new Date()).format('YYYYMMDD');
 
-      ordersModel.action = 'getOrdersSeller';
-      ordersModel.business = db_name;
-      ordersModel.table = doc.table;
-      ordersModel.cardCode = salesPrson;
-      ordersModel.initialDate = initialDate;
-      ordersModel.finalDate = finalDate;
-      let responseList = await OrdersProcedure(ordersModel);
+    ordersModel.action = "getOrders";
+    ordersModel.business = db_name;
+    ordersModel.table = doc.table;
+    ordersModel.cardCode = CardCode;
+    ordersModel.initialDate = fechaInicio;
+    ordersModel.finalDate = fechaFinal;
 
+    let responseList = await OrdersProcedure(ordersModel);
 
-      responseList.map( (order:any) => {
-          order.localLanguage = localLanguage;
-         if(order.DocCur === 'MXP'){
-             order.DocCur = 'MXN';
-         }
-         //Ajuste de fecha con minutos y zona horaria
-         let date = new Date(order.TaxDate);
-         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-         order.TaxDate = moment(new Date(date)).format('YYYYMMDD'); 
-      });
+    responseList.map((order: any) => {
+      order.localLanguage = localLanguage;
+      if (order.DocCur === "MXP") {
+        order.DocCur = "MXN";
+      }
+      //Ajuste de fecha con minutos y zona horaria
+      let date = new Date(order.TaxDate);
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      order.TaxDate = moment(new Date(date)).format("YYYYMMDD");
+    });
 
-      responseModel.message = "lista de pedidos";
-      responseModel.status = 1;
-      responseModel.data = responseList || [];
-      response.json(responseModel);
-  }catch (e) {
-    logger.error(""+e);
-      responseModel.message = "ocurrio un error al traer la lista de pedidos";
-      responseModel.data =  [];
-      response.json(responseModel);
+    responseModel.message = "lista de pedidos";
+    responseModel.status = 1;
+    responseModel.data = responseList || [];
+    response.json(responseModel);
+  } catch (e) {
+    logger.error(e);
+    responseModel.message = "ocurrio un error al traer la lista de pedidos";
+    responseModel.data = [];
+    response.json(responseModel);
+  }
+}
+
+export async function ordersSeller(request: Request, response: Response) {
+  const { db_name, localLanguage } = response.locals.business;
+  const { profile_id } = response.locals.user;
+  const { CardCode } = response.locals.user;
+  const { salesPrson } = request.body;
+
+  const responseModel = new ResponseModel();
+  if (!profile_id) {
+    responseModel.message = "no tienes permiso de realizar esta acción";
+    responseModel.data = [];
+  }
+
+  try {
+    let ordersModel: OrdersModel = new OrdersModel();
+    let doc = getTypeDocument("17");
+    //Fecha condicional desde donde aparecen los pedidos
+    let initialDate = moment(new Date(2020, 1, 1)).format("YYYYMMDD");
+    let finalDate = moment(new Date()).format("YYYYMMDD");
+
+    ordersModel.action = "getOrdersSeller";
+    ordersModel.business = db_name;
+    ordersModel.table = doc.table;
+    ordersModel.cardCode = salesPrson;
+    ordersModel.initialDate = initialDate;
+    ordersModel.finalDate = finalDate;
+    let responseList = await OrdersProcedure(ordersModel);
+
+    responseList.map((order: any) => {
+      order.localLanguage = localLanguage;
+      if (order.DocCur === "MXP") {
+        order.DocCur = "MXN";
+      }
+      //Ajuste de fecha con minutos y zona horaria
+      let date = new Date(order.TaxDate);
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      order.TaxDate = moment(new Date(date)).format("YYYYMMDD");
+    });
+
+    responseModel.message = "lista de pedidos";
+    responseModel.status = 1;
+    responseModel.data = responseList || [];
+    response.json(responseModel);
+  } catch (e) {
+    logger.error("" + e);
+    responseModel.message = "ocurrio un error al traer la lista de pedidos";
+    responseModel.data = [];
+    response.json(responseModel);
   }
 }
 
 export async function order(request: Request, response: Response) {
-    const { db_name } = response.locals.business;
-    const {profile_id} = response.locals.user;
-    const { docEntry } = request.params;
-    const {CardCode} = response.locals.user;
+  const { db_name } = response.locals.business;
+  const { profile_id } = response.locals.user;
+  const { docEntry } = request.params;
+  const { CardCode } = response.locals.user;
 
-    const responseModel = new ResponseModel();
+  const responseModel = new ResponseModel();
 
-    if(!profile_id || !docEntry){
-        responseModel.message = "no tienes permiso de realizar esta acción";
-        responseModel.data = [];
+  if (!profile_id || !docEntry) {
+    responseModel.message = "no tienes permiso de realizar esta acción";
+    responseModel.data = [];
+  }
+
+  try {
+    let ordersModel: OrdersModel = new OrdersModel();
+    let doc = getTypeDocument("17");
+
+    ordersModel.action = "getOrderHeader";
+    ordersModel.business = db_name;
+    ordersModel.table = doc.table;
+    ordersModel.cardCode = CardCode;
+    ordersModel.docEntry = docEntry;
+    let responseHeader = await OrdersProcedure(ordersModel);
+
+    responseHeader = responseHeader[0] || {};
+    if (responseHeader.DocCur === "MXP") {
+      responseHeader.DocCur = "MXN";
     }
 
-    try {
-        let ordersModel: OrdersModel = new OrdersModel();
-        let doc = getTypeDocument('17');
-
-        ordersModel.action = 'getOrderHeader';
-        ordersModel.business = db_name;
-        ordersModel.table = doc.table;
-        ordersModel.cardCode = CardCode;
-        ordersModel.docEntry = docEntry;
-        let responseHeader = await OrdersProcedure(ordersModel);
-
-        responseHeader = responseHeader[0] || {};
-        if(responseHeader.DocCur === 'MXP'){
-            responseHeader.DocCur = 'MXN';
-        }
-
-        ordersModel.action = 'getOrderBody';
-        ordersModel.business = db_name;
-        ordersModel.table = doc.subTable;
-        ordersModel.cardCode = CardCode;
-        ordersModel.docEntry = docEntry;
-        let responseBody = await OrdersProcedure(ordersModel);
-        let statusGuia = await orderValidate.getStatus(doc.table, responseBody);
-        responseModel.message = "información del pedido";
-        responseModel.status = 1;
-        responseModel.data = {header: responseHeader, body: responseBody, statusGuia};
-        response.json(responseModel);
-    }catch (e) {
-      logger.error(""+e);
-        responseModel.message = "ocurrio un error al traer la información del pedido";
-        responseModel.data =  [];
-        response.json(responseModel);
-    }
+    ordersModel.action = "getOrderBody";
+    ordersModel.business = db_name;
+    ordersModel.table = doc.subTable;
+    ordersModel.cardCode = CardCode;
+    ordersModel.docEntry = docEntry;
+    let responseBody = await OrdersProcedure(ordersModel);
+    let statusGuia = await orderValidate.getStatus(doc.table, responseBody);
+    responseModel.message = "información del pedido";
+    responseModel.status = 1;
+    responseModel.data = {
+      header: responseHeader,
+      body: responseBody,
+      statusGuia,
+    };
+    response.json(responseModel);
+  } catch (e) {
+    logger.error("" + e);
+    responseModel.message =
+      "ocurrio un error al traer la información del pedido";
+    responseModel.data = [];
+    response.json(responseModel);
+  }
 }
 
 export async function dataProfile(request: Request, response: Response) {
   const { db_name } = response.locals.business;
-  const {profile_id} = response.locals.user;
+  const { profile_id } = response.locals.user;
   const { docEntry } = request.params;
-  const {CardCode} = response.locals.user;
+  const { CardCode } = response.locals.user;
 
   const responseModel = new ResponseModel();
 
-  if(!profile_id || !docEntry){
-      responseModel.message = "no tienes permiso de realizar esta acción";
-      responseModel.data = [];
+  if (!profile_id || !docEntry) {
+    responseModel.message = "no tienes permiso de realizar esta acción";
+    responseModel.data = [];
   }
 
   try {
-      let ordersModel: OrdersModel = new OrdersModel();
-      let doc = getTypeDocument('17');
+    let ordersModel: OrdersModel = new OrdersModel();
+    let doc = getTypeDocument("17");
 
-      ordersModel.action = 'getDataProfile';
-      ordersModel.business = db_name;
-      ordersModel.table = doc.subTable;
-      ordersModel.cardCode = CardCode;
-      ordersModel.docEntry = docEntry;
-      
-      let responseBody = await OrdersProcedure(ordersModel);    
+    ordersModel.action = "getDataProfile";
+    ordersModel.business = db_name;
+    ordersModel.table = doc.subTable;
+    ordersModel.cardCode = CardCode;
+    ordersModel.docEntry = docEntry;
 
-      responseModel.message = "información del pedido";
-      responseModel.status = 1;
-      responseModel.data = { body: responseBody};
-      response.json(responseModel);
-  }catch (e) {
+    let responseBody = await OrdersProcedure(ordersModel);
+
+    responseModel.message = "información del pedido";
+    responseModel.status = 1;
+    responseModel.data = { body: responseBody };
+    response.json(responseModel);
+  } catch (e) {
     logger.error(e);
-      responseModel.message = "ocurrio un error al traer la información del pedido";
-      responseModel.data =  [];
-      response.json(responseModel);
+    responseModel.message =
+      "ocurrio un error al traer la información del pedido";
+    responseModel.data = [];
+    response.json(responseModel);
   }
 }
 
-export async function AuthorizationModels(request: Request, response: Response) {
+export async function AuthorizationModels(
+  request: Request,
+  response: Response
+) {
   const responseModel = new ResponseModel();
-  let arreglo :any = await AuthorizationDocuments(request, response);
-  responseModel.message = 'Modelos de autorización';
+  let arreglo: any = await AuthorizationDocuments(request, response);
+  responseModel.message = "Modelos de autorización";
   responseModel.status = 1;
   responseModel.data = arreglo;
   response.json(responseModel);
 }
 
-const  AuthorizationDocuments = async (request:Request, response: Response) =>{
-  const {db_name, sapConfig, taxCode, currency, paymentMethod, type} = response.locals.business;
-  const {profile_id} = response.locals.user;
-  const {CardCode,GroupNum} = response.locals.user;
-  const {U_FMB_Handel_Email} = response.locals.user;
-  const {CardName, wareHouse} = response.locals.user;
-  const {objType, address, bill, responseFlete, empID,creator, comment,insurance, itemsGift, fecha, discPrcnt,discPnt, Handel,IdPackge,PorCobrar,tipoEntrega,convenio, datos,packageKeySelect} = request.body;
+const AuthorizationDocuments = async (request: Request, response: Response) => {
+  const { db_name, sapConfig, taxCode, currency, paymentMethod, type } =
+    response.locals.business;
+  const { profile_id } = response.locals.user;
+  const { CardCode, GroupNum } = response.locals.user;
+  const { U_FMB_Handel_Email } = response.locals.user;
+  const { CardName, wareHouse } = response.locals.user;
+  const {
+    objType,
+    address,
+    bill,
+    responseFlete,
+    empID,
+    creator,
+    comment,
+    insurance,
+    itemsGift,
+    fecha,
+    discPrcnt,
+    discPnt,
+    Handel,
+    IdPackge,
+    PorCobrar,
+    tipoEntrega,
+    convenio,
+    datos,
+    packageKeySelect,
+  } = request.body;
 
-  if(type === 'SQL'){
+  if (type === "SQL") {
     let serie;
-    let maniobrasdos = 0// insurance ? insurance : 0;
+    let maniobrasdos = 0; // insurance ? insurance : 0;
 
     //Se define el nuemro de seríe
-    await SeriesProcedure('getSerie').then(result => {
+    await SeriesProcedure("getSerie").then((result) => {
       serie = result[0].serieDefault;
     });
 
@@ -1091,181 +1240,184 @@ const  AuthorizationDocuments = async (request:Request, response: Response) =>{
     let shoppingCart: any = await getShoppingCart(request, response, true);
     //obtiene lo que trae el arreglo del carrito
 
-    if(!shoppingCart.status){
-        responseModel.message = 'Ocurrió un error al obtener el carrito de compras para generar el pedido';
-        response.json(responseModel);
-        return;
+    if (!shoppingCart.status) {
+      responseModel.message =
+        "Ocurrió un error al obtener el carrito de compras para generar el pedido";
+      response.json(responseModel);
+      return;
     }
 
-        let cardCode = CardCode;
-        let addressKey = '';
-        let billKey = '';
-        let comments = '';
-        let docCurrency = currency;
-        //Email del cliente
-        let mailToCliente = U_FMB_Handel_Email;
-        let nameMail = CardName;
-        let totalMail = '0';
+    let cardCode = CardCode;
+    let addressKey = "";
+    let billKey = "";
+    let comments = "";
+    let docCurrency = currency;
+    //Email del cliente
+    let mailToCliente = U_FMB_Handel_Email;
+    let nameMail = CardName;
+    let totalMail = "0";
 
-        if(profile_id){
-          if(address.address===bill.address){
-            addressKey = address.address;
-            billKey = "";
-          }else{
-            addressKey = address.address;
-            billKey = bill.address;
-          }
-        }else{
-            comments = `
+    if (profile_id) {
+      if (address.address === bill.address) {
+        addressKey = address.address;
+        billKey = "";
+      } else {
+        addressKey = address.address;
+        billKey = bill.address;
+      }
+    } else {
+      comments = `
             nombre: ${address.name}, email: ${address.email}, telefono: ${address.phone},
             calle: ${address.street}, colonia: ${address.block}, municipio: ${address.city},código postal: ${address.cp},
             estado: ${address.state}, pais: ${address.country},
             `;
+    }
+
+    let subTotal = 0;
+    let taxTotal = 0;
+    let total = 0;
+    let tax = 0;
+    //Variables para validacion del Flete
+    let transport = 0;
+    let taxTransport = 0;
+    let limit = 0;
+    let articulos: any = [];
+    shoppingCart.data.shoppingCart.map((item: any) => {
+      let totalPrice = Number(item.Price * item.Rate * item.quantity);
+      subTotal += totalPrice;
+      tax = item.taxRate;
+      taxTotal += Number(item.taxSum * item.quantity);
+      articulos.push({
+        ItemCode: item.ItemCode,
+        quantity: parseInt(item.quantity),
+      });
+    });
+    articulos = JSON.stringify(articulos);
+
+    limit = parseInt(responseFlete.PurchaseLimit);
+    transport = parseFloat(responseFlete.Price);
+    taxTransport = Number(transport * (tax * 0.01));
+    //Validacion del flete
+    if (subTotal < limit) {
+      taxTotal = taxTotal + taxTransport;
+      total = subTotal + transport + taxTotal;
+    } else {
+      transport = 0;
+      total = subTotal + transport + taxTotal;
+    }
+
+    //#region AUTORIZACION
+    let ModelAutorization: any;
+    let IdAutorization: any;
+    let NameAutorization: any;
+    let borrador: any;
+    let dataResult = {};
+    var autorizaciones = new Array();
+
+    let storedprocedure = {
+      actions: "ALL",
+    };
+
+    let resul = await AutorizacionesProcedure(storedprocedure);
+    for (let index = 0; index < resul.length; index++) {
+      const autorization = resul[index];
+      //  --Saldo Fac y Lim Cr22
+      if (autorization.QueryId === 350) {
+        let query350 = {
+          actions: "350",
+          param1: cardCode,
+          param2: Number(total).toFixed(2),
+        };
+        let res = await AutorizacionesProcedure(query350);
+        borrador = res[0];
+        borrador = Object.values(borrador);
+        borrador = borrador[0];
+
+        if (borrador === "TRUE") {
+          ModelAutorization = autorization.Name;
+          IdAutorization = autorization.UserID;
+          NameAutorization = autorization.U_NAME;
+          // creditLimit = true;
         }
+      }
+      //  --Condición de pago Autorizacion
+      // if(autorization.QueryId === 3400){
+      //   let query340 = {
+      //     actions : '340',
+      //     param2 : cardCode
+      //   }
+      //   let res = await AutorizacionesProcedure(query340);
+      //   borrador = res[0];
+      //   borrador = Object.values(borrador);
+      //   borrador = borrador[0];
+      //   if(borrador === 'TRUE'){
+      //     ModelAutorization = autorization.Name;
+      //     IdAutorization = autorization.UserID;
+      //     NameAutorization = autorization.U_NAME;
+      //     // creditLimit = true;
+      //   }
+      // }
+      if (borrador === "TRUE") {
+        dataResult = {
+          cond: true,
+          nameCond: ModelAutorization,
+          autoId: IdAutorization,
+          autoName: NameAutorization,
+          wtm: autorization.WtmCode,
+          wst: autorization.WstCode,
+          MaxReqr: autorization.MaxReqr,
+          MaxRejReqr: autorization.MaxRejReqr,
+          Correo: autorization.E_Mail,
+        };
+        autorizaciones.push(dataResult);
+      }
+    }
 
-        let subTotal = 0;
-        let taxTotal = 0;
-        let total = 0;
-        let tax = 0;
-        //Variables para validacion del Flete
-        let transport = 0;
-        let taxTransport = 0;
-        let limit = 0;
-        let articulos: any = [];
-        shoppingCart.data.shoppingCart.map((item:any) => {
-            let totalPrice = Number((item.Price * item.Rate) * item.quantity);
-            subTotal += totalPrice;
-            tax = item.taxRate;
-            taxTotal += Number(item.taxSum * item.quantity);
-            articulos.push({'ItemCode': item.ItemCode, 'quantity': parseInt(item.quantity)});
-        });
-        articulos = JSON.stringify(articulos);
-        
-        limit = parseInt(responseFlete.PurchaseLimit);
-        transport = parseFloat(responseFlete.Price);
-        taxTransport = Number(transport*(tax*0.01));
-        //Validacion del flete
-        if(subTotal < limit){
-            taxTotal = taxTotal + taxTransport;
-            total = subTotal + transport + taxTotal;
-        }else{
-            transport = 0;
-            total = subTotal + transport + taxTotal;
-        }
+    //#endregion AUTORIZACION
 
-
-        //#region AUTORIZACION
-        let ModelAutorization : any;
-        let IdAutorization : any;
-        let NameAutorization : any;
-        let borrador : any;
-        let dataResult = {};
-        var autorizaciones = new Array();
-
-        let storedprocedure = {
-          actions : 'ALL'
-        }
-
-        let resul = await AutorizacionesProcedure(storedprocedure);
-        for (let index = 0; index < resul.length; index++) {
-          const autorization = resul[index];
-          //  --Saldo Fac y Lim Cr22 
-          if(autorization.QueryId === 350){
-            let query350 = {
-              actions : '350',
-              param1 : cardCode,
-              param2 : Number(total).toFixed(2)
-            }
-            let res = await AutorizacionesProcedure(query350);
-            borrador = res[0];
-            borrador = Object.values(borrador);
-            borrador = borrador[0];
-
-            if(borrador === 'TRUE'){
-              ModelAutorization = autorization.Name;
-              IdAutorization = autorization.UserID;
-              NameAutorization = autorization.U_NAME;
-              // creditLimit = true;
-            }
-          }
-          //  --Condición de pago Autorizacion
-          // if(autorization.QueryId === 3400){
-          //   let query340 = {
-          //     actions : '340',
-          //     param2 : cardCode
-          //   }
-          //   let res = await AutorizacionesProcedure(query340);
-          //   borrador = res[0];
-          //   borrador = Object.values(borrador);
-          //   borrador = borrador[0];
-          //   if(borrador === 'TRUE'){
-          //     ModelAutorization = autorization.Name;
-          //     IdAutorization = autorization.UserID;
-          //     NameAutorization = autorization.U_NAME;
-          //     // creditLimit = true;
-          //   }
-          // }
-          if(borrador === 'TRUE'){
-              dataResult = {
-                  cond:true,
-                  nameCond : ModelAutorization,
-                  autoId : IdAutorization,
-                  autoName : NameAutorization,
-                  wtm : autorization.WtmCode,
-                  wst : autorization.WstCode,
-                  MaxReqr :autorization.MaxReqr,
-                  MaxRejReqr : autorization.MaxRejReqr,
-                  Correo : autorization.E_Mail
-              }
-              autorizaciones.push(dataResult);
-          }              
-      } 
-
-
-      //#endregion AUTORIZACION
-        
-      return autorizaciones;
-  }else{
+    return autorizaciones;
+  } else {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const sh = new SchemaService ();
+    const sh = new SchemaService();
     let serie;
-    await SeriesProcedure('getSerie').then(result => {
+    await SeriesProcedure("getSerie").then((result) => {
       serie = result[0].serieDefault;
     });
     const responseModel = new ResponseModel();
 
     let shoppingCart: any = await getShoppingCart(request, response, true);
     //obtiene lo que trae el arreglo del carrito
-    
-    if(!shoppingCart.status){
-        responseModel.message = 'Ocurrió un problema al obtener el carrito de compras para generar el pedido';
-        response.json(responseModel);
-        return;
+
+    if (!shoppingCart.status) {
+      responseModel.message =
+        "Ocurrió un problema al obtener el carrito de compras para generar el pedido";
+      response.json(responseModel);
+      return;
     }
 
-    let prices :any;
-    
-    let tipoVta = '01';
+    let prices: any;
+
+    let tipoVta = "01";
     let cardCode = CardCode;
-    let addressKey = '';
-    let billKey = '';
-    let comments = '';
+    let addressKey = "";
+    let billKey = "";
+    let comments = "";
     let docCurrency = currency;
     //Email del cliente
     //let mailToCliente = U_Handel_Email;
     let nameMail = CardName;
-    let totalMail = '0';
+    let totalMail = "0";
 
-    if(profile_id){
-      if(address.address===bill.address){
+    if (profile_id) {
+      if (address.address === bill.address) {
         addressKey = address.address;
         billKey = "";
-      }else{
+      } else {
         addressKey = address.address;
         billKey = bill.address;
       }
-    }else{
-        comments = `
+    } else {
+      comments = `
         nombre: ${address.name}, email: ${address.email}, telefono: ${address.phone},
         calle: ${address.street}, colonia: ${address.block}, municipio: ${address.city},código postal: ${address.cp},
         estado: ${address.state}, pais: ${address.country},
@@ -1273,155 +1425,162 @@ const  AuthorizationDocuments = async (request:Request, response: Response) =>{
     }
 
     let subTotal = 0;
-        let taxTotal = 0;
-        let total = 0;
-        let tax = 0;
-        //Variables para validacion del Flete
-        let transport = 0;
-        let taxTransport = 0;
-        let limit = 0;
-        let articulosUno: any = [];
-        shoppingCart.data.shoppingCart.map((item:any) => {
-            let totalPrice = Number((item.Price * item.Rate) * item.quantity);
-            subTotal += totalPrice;
-            tax = item.taxRate;
-            taxTotal += Number(item.taxSum * item.quantity);
-            articulosUno.push({'ItemCode': item.ItemCode, 'quantity': parseInt(item.quantity)});
-        });
-        articulosUno = JSON.stringify(articulosUno);
-        
-        limit = parseInt(responseFlete.PurchaseLimit);
-        transport = parseFloat(responseFlete.Price);
-        taxTransport = Number(transport*(tax*0.01));
-        //Validacion del flete
-        if(subTotal < limit){
-            taxTotal = taxTotal + taxTransport;
-            total = subTotal + transport + taxTotal;
-        }else{
-            transport = 0;
-            total = subTotal + transport + taxTotal;
-        }
+    let taxTotal = 0;
+    let total = 0;
+    let tax = 0;
+    //Variables para validacion del Flete
+    let transport = 0;
+    let taxTransport = 0;
+    let limit = 0;
+    let articulosUno: any = [];
+    shoppingCart.data.shoppingCart.map((item: any) => {
+      let totalPrice = Number(item.Price * item.Rate * item.quantity);
+      subTotal += totalPrice;
+      tax = item.taxRate;
+      taxTotal += Number(item.taxSum * item.quantity);
+      articulosUno.push({
+        ItemCode: item.ItemCode,
+        quantity: parseInt(item.quantity),
+      });
+    });
+    articulosUno = JSON.stringify(articulosUno);
 
-    let today:any = new Date();
-    today = moment(today).format('YYYYMMDD');
-    let fecha = moment(today).format('YYYY-MM-DD');
+    limit = parseInt(responseFlete.PurchaseLimit);
+    transport = parseFloat(responseFlete.Price);
+    taxTransport = Number(transport * (tax * 0.01));
+    //Validacion del flete
+    if (subTotal < limit) {
+      taxTotal = taxTotal + taxTransport;
+      total = subTotal + transport + taxTotal;
+    } else {
+      transport = 0;
+      total = subTotal + transport + taxTotal;
+    }
+
+    let today: any = new Date();
+    today = moment(today).format("YYYYMMDD");
+    let fecha = moment(today).format("YYYY-MM-DD");
     // fecha = fecha.substr(0,7);
     //WAREHOUSE DEL DOCUMENTO
-    let resultWareHouse : any= []// await WareHouseProcedure('U_SYP_RICO_CCANAL', 'U_SYP_RICO_CSUCUR');
-    
+    let resultWareHouse: any = []; // await WareHouseProcedure('U_SYP_RICO_CCANAL', 'U_SYP_RICO_CSUCUR');
+
     //resultWareHouse = resultWareHouse[0].U_SYP_RICO_CODALM;
-    let articulos: any = [];//INSERT EN AUTORIZACION   
+    let articulos: any = []; //INSERT EN AUTORIZACION
     let items: any = [];
     items = shoppingCart.data.shoppingCart;
-    
+
     //Descuentos
     let model: ProductsModel = new ProductsModel();
 
-    model.action = 'searchByKey';
+    model.action = "searchByKey";
     model.business = db_name;
     model.cardCode = CardCode;
 
-    let DocumentLines: any =[];
-    let datos : any;
-        
-    items.map((item: any) =>{    
-      let lines ={
-        ItemCode:item.ItemCode,
+    let DocumentLines: any = [];
+    let datos: any;
+
+    items.map((item: any) => {
+      let lines = {
+        ItemCode: item.ItemCode,
         Quantity: item.quantity,
-        Currency : item.currency,
+        Currency: item.currency,
         WarehouseCode: item.WhsCode,
         // TaxCode: 'IVAV16',
         // Price: item.Price,
         //Debe ser Y si en la linea es bonificacion
-        //U_SYP_RICO_BONIF: 'N', 
-        //Si es bonificaicon tYES solo en la linea que es y si es TRANSFERENCIA GRATUITA ES EN TODAS LAS LINEAS       
+        //U_SYP_RICO_BONIF: 'N',
+        //Si es bonificaicon tYES solo en la linea que es y si es TRANSFERENCIA GRATUITA ES EN TODAS LAS LINEAS
         // TaxOnly: 'tNO',
-      }
+      };
       DocumentLines.push(lines);
-      articulos.push({'ItemCode': item.ItemCode, 'quantity': parseInt(item.quantity)});
+      articulos.push({
+        ItemCode: item.ItemCode,
+        quantity: parseInt(item.quantity),
+      });
     });
     articulos = JSON.stringify(articulos);
     //#########################################itemsGift##############################################
     let stockBonificacion = false;
-    let articulosbonificacion = '';
-    let quiebreStock : any =[];
-     
-      //----------------------------
-      
+    let articulosbonificacion = "";
+    let quiebreStock: any = [];
+
+    //----------------------------
+
     let DocSubtotal = 0;
-    let DocTotal = 0; 
+    let DocTotal = 0;
     let Doctax = 0;
-    items.map((item: any) =>{
+    items.map((item: any) => {
       item.Discount = parseInt(item.Discount);
       if (isNaN(item.Discount)) {
         item.Discount = 0;
-    }
-      let Preciototal = Number(item.Price * item.quantity - (item.Price * item.quantity * (item.Discount / 100)));
+      }
+      let Preciototal = Number(
+        item.Price * item.quantity -
+          item.Price * item.quantity * (item.Discount / 100)
+      );
       Doctax = item.taxRate;
-      DocSubtotal += tipoVta === '02' ? 0 : Preciototal;
+      DocSubtotal += tipoVta === "02" ? 0 : Preciototal;
     });
 
-    let DocIgv = tipoVta === '02' ? 0 : Doctax * DocSubtotal / 100;
-    DocTotal = tipoVta === '02' ? 0 : DocSubtotal + DocIgv;
+    let DocIgv = tipoVta === "02" ? 0 : (Doctax * DocSubtotal) / 100;
+    DocTotal = tipoVta === "02" ? 0 : DocSubtotal + DocIgv;
 
-    
+    ////PROCESO DE AUTORIZACION QUERY
+    let ModelAutorization: any;
+    let IdAutorization: any;
+    let NameAutorization: any;
 
-  ////PROCESO DE AUTORIZACION QUERY 
-    let ModelAutorization : any;
-    let IdAutorization : any;
-    let NameAutorization : any;
-    
     let ListAutorizations = {
-      actions : 'ALL'
-    }
-    let resul = await AutorizacionesProcedure(ListAutorizations);    
-    
+      actions: "ALL",
+    };
+    let resul = await AutorizacionesProcedure(ListAutorizations);
+
     let creditLimit = false;
-    let borrador : any;
+    let borrador: any;
     let dataResult = {};
     var autorizaciones = new Array();
     for (let index = 0; index < resul.length; index++) {
-        const autorizarion = resul[index];
-        // VTA-OV-FACVENC-LIMA
-        if(autorizarion.QueryId===1546){
-          let numAutorizacion = {
-            actions : '1546',
-            param1 : CardCode,
-            param2 : Number(total).toFixed(2), 
-            param3 : '',
-          }
-          let res = await AutorizacionesProcedure(numAutorizacion)
-          
-          borrador = res.length > 0 ? res[0] : [ { "'FALSE'": 'FALSE' } ];
-          borrador = Object.values(borrador);
-          borrador = borrador[0];
-          if(borrador === 'TRUE'){
-            ModelAutorization = autorizarion.Name;
-            IdAutorization = autorizarion.UserID;
-            NameAutorization = autorizarion.U_NAME;
-          }
+      const autorizarion = resul[index];
+      // VTA-OV-FACVENC-LIMA
+      if (autorizarion.QueryId === 1546) {
+        let numAutorizacion = {
+          actions: "1546",
+          param1: CardCode,
+          param2: Number(total).toFixed(2),
+          param3: "",
+        };
+        let res = await AutorizacionesProcedure(numAutorizacion);
+
+        borrador = res.length > 0 ? res[0] : [{ "'FALSE'": "FALSE" }];
+        borrador = Object.values(borrador);
+        borrador = borrador[0];
+        if (borrador === "TRUE") {
+          ModelAutorization = autorizarion.Name;
+          IdAutorization = autorizarion.UserID;
+          NameAutorization = autorizarion.U_NAME;
         }
-        if(borrador === 'TRUE'){
-            dataResult = {
-                cond:true,
-                nameCond : ModelAutorization,
-                autoId : IdAutorization,
-                autoName : NameAutorization,
-                wtm : autorizarion.WtmCode,
-                wst : autorizarion.WstCode,
-                MaxReqr :autorizarion.MaxReqr,
-                MaxRejReqr : autorizarion.MaxRejReqr,
-                Correo : autorizarion.E_Mail
-            }
-            autorizaciones.push(dataResult);
-        }              
-    }     
+      }
+      if (borrador === "TRUE") {
+        dataResult = {
+          cond: true,
+          nameCond: ModelAutorization,
+          autoId: IdAutorization,
+          autoName: NameAutorization,
+          wtm: autorizarion.WtmCode,
+          wst: autorizarion.WstCode,
+          MaxReqr: autorizarion.MaxReqr,
+          MaxRejReqr: autorizarion.MaxRejReqr,
+          Correo: autorizarion.E_Mail,
+        };
+        autorizaciones.push(dataResult);
+      }
+    }
     return autorizaciones;
   }
-}
+};
 
-function contextEmailDaysPlus(data: any){  
-  let msghtml =  `
+function contextEmailDaysPlus(data: any) {
+  let msghtml = `
   
   <html>
   <head>
@@ -1794,7 +1953,9 @@ function contextEmailDaysPlus(data: any){
                                 <td
                                   style="font-family: Helvetica; color: #000000; font-size: 15px; line-height: 25px; font-weight:bold; mso-line-height-rule: exactly; text-align: justify; padding: 20px 20px 30px 20px;"
                                   align="center" class="copy">
-                                  <a style="color: #000000; text-decoration: none;">Estimado ${data.nameMail},</a>
+                                  <a style="color: #000000; text-decoration: none;">Estimado ${
+                                    data.nameMail
+                                  },</a>
                                 </td>
                               </tr>
                               <tr>
@@ -1858,11 +2019,13 @@ function contextEmailDaysPlus(data: any){
                                 style=" font-family: Helvetica; color: #000000; font-size: 15px; line-height: 20px; mso-line-height-rule: exactly; text-align: justify; padding: 0px 20px 0px 20px;"
                                 align="center" class="copy">
                                 <a style="color: #000000; text-decoration: none;">
-                                  <p><b>Dirección: </b> ${ data.address.address } 
-                                    ,<b>Calle/Número: </b> ${ data.address.street } 
-                                    ,<b>CP: </b> ${ data.address.cp } 
-                                    ,<b>Ciudad: </b> ${ data.address.city } 
-                                    ,<b>País: </b> ${ data.address.country} </p>
+                                  <p><b>Dirección: </b> ${data.address.address} 
+                                    ,<b>Calle/Número: </b> ${
+                                      data.address.street
+                                    } 
+                                    ,<b>CP: </b> ${data.address.cp} 
+                                    ,<b>Ciudad: </b> ${data.address.city} 
+                                    ,<b>País: </b> ${data.address.country} </p>
                                 </a>
                               </td>
 

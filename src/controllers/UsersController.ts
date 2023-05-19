@@ -15,7 +15,7 @@ import ProfileModel from "../models/ProfileModel";
 import ProfileProcedure from "../procedures/ProfileProcedure";
 import OptionsController from "../procedures/PayMethoProcedure";
 import EmailProcedure from "../procedures/EmailProcedure";
-import {helpers} from '../middleware/helper';
+import { helpers } from '../middleware/helper';
 import PointsHistoryModel from "../models/PointsHistoryModel";
 import PointsHistoryProcedure from "../procedures/PointsHistoryProcedure";
 import { infoPoints } from "../controllers/PointsHistoryController";
@@ -81,9 +81,10 @@ export async function loginPartner(request: Request, response: Response) {
     ////console.log("Se va por login", model);
 
     let result = await UsersProcedure(model);
-    
+    console.log('117>> result', result)
+
     responseModel.from = 1;
-    
+
     if (!result || !result[0]) {
       responseModel.message = "La cuenta no existe";
       responseModel.type = 1;
@@ -91,11 +92,11 @@ export async function loginPartner(request: Request, response: Response) {
       return;
     }
 
-    if (result[0].U_FMB_Handel_ATV !== null && result[0].U_FMB_Handel_ATV !== 1 && result[0].U_FMB_Handel_ATV !== '1') {
-      responseModel.message = "Error al accesar a tu cuenta, favor de contactar al asesor de ventas.";
-      response.json(responseModel);
-      return;
-    }
+    // if (result[0].U_FMB_Handel_ATV !== null && result[0].U_FMB_Handel_ATV !== 1 && result[0].U_FMB_Handel_ATV !== '1') {
+    //   responseModel.message = "Error al accesar a tu cuenta, favor de contactar al asesor de ventas.";
+    //   response.json(responseModel);
+    //   return;
+    // }
 
     if (password != result[0].U_FMB_Handel_Pass) {
       // validate encriptor
@@ -112,7 +113,7 @@ export async function loginPartner(request: Request, response: Response) {
 
     if (!profile.status) {
       let profile: any = await createProfile(request, response, true);
-      
+
       result[0].profile_id = profile.data.id;
       result[0].banners = profile.data.admin_banner;
 
@@ -144,20 +145,20 @@ export async function loginPartner(request: Request, response: Response) {
 
     let minutesDifference = false;
     let lastDateEmail = (!resultLastTimeEmail || !resultLastTimeEmail[0] || resultLastTimeEmail[0].twoStepsDateTime === null || resultLastTimeEmail[0].twoStepsDateTime === '') ? '' : resultLastTimeEmail[0].twoStepsDateTime;
-    
-    if(lastDateEmail !== ''){
+
+    if (lastDateEmail !== '') {
       //MinutesDifferenceForgottenPassword
-      if(resultLastTimeEmail[0].MinutesDifferenceTwoSteps !== null){
+      if (resultLastTimeEmail[0].MinutesDifferenceTwoSteps !== null) {
         resultLastTimeEmail[0].MinutesDifferenceTwoSteps = (resultLastTimeEmail[0].MinutesDifferenceTwoSteps < 0) ? resultLastTimeEmail[0].MinutesDifferenceTwoSteps * -1 : resultLastTimeEmail[0].MinutesDifferenceTwoSteps;
-        if(resultLastTimeEmail[0].MinutesDifferenceTwoSteps >= 10){
+        if (resultLastTimeEmail[0].MinutesDifferenceTwoSteps >= 10) {
           minutesDifference = true;
         }
       }
     } else {
       minutesDifference = true;
     }
-    
-    if(lastDateEmail === '' || minutesDifference === true){
+
+    if (lastDateEmail === '' || minutesDifference === true) {
       let code = generateCode(6);
       model.action = "saveCode";
       model.business = db_name;
@@ -168,18 +169,18 @@ export async function loginPartner(request: Request, response: Response) {
     }
 
     let sendEmailValidation = minutesDifference === true ? 'Y' : 'N';
-    
+
     // Remove password
     result[0].U_FMB_Handel_Pass = undefined;
 
-    
+
     let limit = result[0].Balance - result[0].CreditLine
     if (limit > 0) {
-      clientAccessWithCreditExceeded(result[0].CardCode,result[0].CardName,result[0].Email_SAP)
+      clientAccessWithCreditExceeded(result[0].CardCode, result[0].CardName, result[0].Email_SAP)
     }
 
     responseModel.status = 1;
-    responseModel.data = { user: result[0], token, sendEmail : sendEmailValidation };
+    responseModel.data = { user: result[0], token, sendEmail: sendEmailValidation };
     response.json(responseModel);
   } catch (e) {
     logger.error(e);
@@ -190,11 +191,11 @@ export async function loginPartner(request: Request, response: Response) {
 }
 
 export async function getBusinessPartnerInfo(request: Request, response: Response): Promise<void> {
-  let {db_name} = response.locals.business;
+  let { db_name } = response.locals.business;
   //const {wareHouse} = response.locals.business;
-  const {wareHouse} = response.locals.user;
+  const { wareHouse } = response.locals.user;
   let responseModel = new ResponseModel();
-  let {cardCode} = request.params;
+  let { cardCode } = request.params;
   let cardCodeOk = decodeURIComponent(cardCode);
 
   try {
@@ -210,7 +211,7 @@ export async function getBusinessPartnerInfo(request: Request, response: Respons
       response.json(responseModel);
       return;
     }
-    
+
     // if (result[0].U_FMB_Handel_RedCard === null || result[0].U_FMB_Handel_RedCard === '') {
     //   // result[0].U_FMB_Handel_Pass = undefined;
     //   result[0].Card = "N";
@@ -241,7 +242,7 @@ export async function getBusinessPartnerInfo(request: Request, response: Respons
     model2.action = "lastRegisterResetPoints";
     let resultLastRegisterResetPoints = await PointsHistoryProcedure(model2);
 
-    let dataPoints = await infoPoints({CardCode: cardCodeOk, DocDate: result[0].CreateDate});
+    let dataPoints = await infoPoints({ CardCode: cardCodeOk, DocDate: result[0].CreateDate });
     // result[0].U_FMB_Handel_Pass = undefined;
 
     let response1 = {
@@ -259,8 +260,8 @@ export async function getBusinessPartnerInfo(request: Request, response: Respons
   response.json(responseModel);
 }
 
-export async function requestCard(request: Request, response: Response): Promise<void> {  
-  const {CardCode, CardName, email, phone, country, state, city} = request.body.data;
+export async function requestCard(request: Request, response: Response): Promise<void> {
+  const { CardCode, CardName, email, phone, country, state, city } = request.body.data;
   const { db_name, sapConfig } = response.locals.business;
   const responseModel = new ResponseModel();
 
@@ -273,30 +274,30 @@ export async function requestCard(request: Request, response: Response): Promise
 
   let minutesDifference = false;
   let lastDateRequestCardEmail = (!resultLastTimeRequestCard || !resultLastTimeRequestCard[0] || resultLastTimeRequestCard[0].requestCardDateTime === null || resultLastTimeRequestCard[0].requestCardDateTime === '') ? '' : resultLastTimeRequestCard[0].requestCardDateTime;
-  
-  if(lastDateRequestCardEmail !== ''){
+
+  if (lastDateRequestCardEmail !== '') {
     //MinutesDifferenceForgottenPassword
-    if(resultLastTimeRequestCard[0].MinutesDifferenceRequestCard !== null){
-      if(resultLastTimeRequestCard[0].MinutesDifferenceRequestCard >= 10){
+    if (resultLastTimeRequestCard[0].MinutesDifferenceRequestCard !== null) {
+      if (resultLastTimeRequestCard[0].MinutesDifferenceRequestCard >= 10) {
         minutesDifference = true;
       }
     }
   } else {
     minutesDifference = true;
   }
-    
-  if(lastDateRequestCardEmail === '' || minutesDifference === true){
+
+  if (lastDateRequestCardEmail === '' || minutesDifference === true) {
     model.action = "saveRequestCardTime";
     model.business = db_name;
     model.arg1 = CardCode;
     let resultRequestCardInsertion = await UsersProcedure(model);
-    if( CardName == '' || email == '' || phone == '' || country == '' || state == '' || city == ''){
+    if (CardName == '' || email == '' || phone == '' || country == '' || state == '' || city == '') {
       responseModel.message = 'Verifique que sus datos sean correctos en su perfil';
       response.json(responseModel);
       return;
     }
 
-    let msghtml =  `<html>
+    let msghtml = `<html>
     <head>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -385,36 +386,36 @@ export async function requestCard(request: Request, response: Response): Promise
     </body>
     </html>`;
     //          <p><span><b>${subtitle}:</b> </span><strong><u>${password}</u></strong> ${text} puede ser utilizado para iniciar sesión en tu cuenta de E-Commerce</p>
-    try{
+    try {
       let dataMail = await EmailProcedure("getRequestedCard");
       //console.log(dataMail);
       let bcc;
-      if (dataMail[0].validateRequestedCard === 1){
+      if (dataMail[0].validateRequestedCard === 1) {
         bcc = dataMail[0].requestedCardBCC;
-      }else{
-        bcc="";
+      } else {
+        bcc = "";
       }
 
       let subject = dataMail[0].requestedCardSubject;
       subject = "Nueva solicitud de tarjeta de Recompensas";
-      let sendMail = await helpers.sendEmail("missaquilesfmb@hotmail.com","",bcc,subject,msghtml,null);
+      let sendMail = await helpers.sendEmail("missaquilesfmb@hotmail.com", "", bcc, subject, msghtml, null);
 
       responseModel.message = 'Correo de solicitud de tarjeta enviado';
 
       responseModel.status = 1;
-      responseModel.data = { response: 'OK'}
+      responseModel.data = { response: 'OK' }
       response.json(responseModel);
-    }catch (e) {
+    } catch (e) {
       logger.error(e);
       responseModel.status = 0;
       responseModel.message = " Ocurrió un error al enviar el correo de confirmación";
       response.json(responseModel);
     }
   } else {
-      responseModel.message = ' Debes esperar al menos 10 minutos para poder enviar otro correo';
-      responseModel.status = 1;
-      responseModel.data = { response: '10minutes'}
-      response.json(responseModel);
+    responseModel.message = ' Debes esperar al menos 10 minutos para poder enviar otro correo';
+    responseModel.status = 1;
+    responseModel.data = { response: '10minutes' }
+    response.json(responseModel);
   }
 }
 
@@ -441,14 +442,14 @@ export async function twoStepsVerification(request: Request, response: Response)
     model.business = db_name;
     model.arg1 = result[0].CardCode;
     let resultCode = await UsersProcedure(model);
-    
+
     if (!resultCode || !resultCode[0]) {
       responseModel.message = "La cuenta no existe";
       response.json(responseModel);
       return;
     }
-    
-    if(resultCode[0].twoStepsKey === key){
+
+    if (resultCode[0].twoStepsKey === key) {
       responseModel.status = 1;
       responseModel.data = { answer: 'Y' };
       response.json(responseModel);
@@ -487,7 +488,7 @@ export async function twoStepsMail(request: Request, response: Response) {
     model.business = db_name;
     model.arg1 = result[0].CardCode;
     let resultCode = await UsersProcedure(model);
-    
+
     if (!resultCode || !resultCode[0]) {
       responseModel.message = "La cuenta no existe";
       response.json(responseModel);
@@ -502,7 +503,7 @@ export async function twoStepsMail(request: Request, response: Response) {
 
     let sendEmailValidation = 'Y';
     // Si es contraseña olvidada se manda el password por correo
-    if(forgottenPassword !== undefined){
+    if (forgottenPassword !== undefined) {
       password = result[0].U_FMB_Handel_Pass;
       operation = 'forgottenPassword';
       model.action = "timeMails";
@@ -513,10 +514,10 @@ export async function twoStepsMail(request: Request, response: Response) {
 
       let minutesDifference = false;
       let lastDateEmail = (!resultLastTimeEmail || !resultLastTimeEmail[0] || resultLastTimeEmail[0].forgottenPasswordDateTime === null || resultLastTimeEmail[0].forgottenPasswordDateTime === '') ? '' : resultLastTimeEmail[0].forgottenPasswordDateTime;
-      
-      if(lastDateEmail !== ''){
-        if(resultLastTimeEmail[0].MinutesDifferenceForgottenPassword !== null){
-          if(resultLastTimeEmail[0].MinutesDifferenceForgottenPassword >= 10){
+
+      if (lastDateEmail !== '') {
+        if (resultLastTimeEmail[0].MinutesDifferenceForgottenPassword !== null) {
+          if (resultLastTimeEmail[0].MinutesDifferenceForgottenPassword >= 10) {
             minutesDifference = true;
           }
         }
@@ -525,7 +526,7 @@ export async function twoStepsMail(request: Request, response: Response) {
       }
 
       sendEmailValidation = minutesDifference === true ? 'Y' : 'N';
-      if(sendEmailValidation === 'Y'){
+      if (sendEmailValidation === 'Y') {
         model.action = "saveForgottenPasswordTime";
         model.business = db_name;
         model.arg1 = result[0].CardCode;
@@ -533,39 +534,39 @@ export async function twoStepsMail(request: Request, response: Response) {
         let resultCode = await UsersProcedure(model);
       }
     }
-    
-    if(sendEmailValidation === 'Y'){
-      let responseMail = await successfullyVerification(cardCode,cardName,result[0].U_FMB_Handel_Email,password,operation);
+
+    if (sendEmailValidation === 'Y') {
+      let responseMail = await successfullyVerification(cardCode, cardName, result[0].U_FMB_Handel_Email, password, operation);
       response.json(responseMail);
     } else {
       responseModel.status = 1;
       responseModel.data = { response: 'N' };
       response.json(responseModel);
     }
-    
-    
+
+
   } catch (e) {
-    logger.error('Error Email',e);
+    logger.error('Error Email', e);
     responseModel.message = "Ocurrió un error inesperado";
     response.json(responseModel);
   }
 }
 
-function generateCode(length:Number) {
+function generateCode(length: Number) {
   let result = [];
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for ( var i = 0; i < length; i++ ) {
+  for (var i = 0; i < length; i++) {
     result.push(characters.charAt(Math.floor(Math.random() * characters.length)));
   }
   return result.join('');
 }
 
-export async function successfullyVerification(CardCode: String, CardName: string, email: string, password: string, operation: string){
+export async function successfullyVerification(CardCode: String, CardName: string, email: string, password: string, operation: string) {
   const responseModel = new ResponseModel();
   let title = operation !== 'twoSteps' ? 'Recuperación de contraseña' : 'Confirmación de inicio de sesión';
   let subtitle = operation !== 'twoSteps' ? 'Contraseña' : 'Código de confirmación de inicio de sesión';
   let text = operation !== 'twoSteps' ? 'Esta contraseña' : 'Este código';
-  let msghtml =  `
+  let msghtml = `
 
   <html>
     <head>
@@ -1129,28 +1130,28 @@ export async function successfullyVerification(CardCode: String, CardName: strin
   </body>
   </html>
   `;
-  try{
+  try {
     let dataMail = await EmailProcedure("getTwoSteps");
     ////console.log(dataMail);
     let bcc;
-    if (dataMail[0].validateTwoSteps === 1){
+    if (dataMail[0].validateTwoSteps === 1) {
       bcc = dataMail[0].twoStepsBCC;
-    }else{
-      bcc="";
+    } else {
+      bcc = "";
     }
 
     let subject = dataMail[0].twoStepsSubject;
-    let sendMail = await helpers.sendEmail(email,"",bcc,subject,msghtml,null );
+    let sendMail = await helpers.sendEmail(email, "", bcc, subject, msghtml, null);
 
     responseModel.status = 1;
     responseModel.message = " Correo enviado ";
-    responseModel.data = { response: sendMail}
+    responseModel.data = { response: sendMail }
     return responseModel;
-  }catch (e) {
+  } catch (e) {
     logger.error(e);
     responseModel.status = 0;
     responseModel.message = " Ocurrió un error al enviar el correo de confirmación";
-    return responseModel;  
+    return responseModel;
   }
 }
 
@@ -1162,28 +1163,22 @@ export async function showPartner(request: Request, response: Response) {
 }
 
 export async function createPartner(request: Request, response: Response) {
-  const { db_name, priceList, currency, groupCode, paymentCondition, paymentMethod, rfcGeneric, sapConfig,type} = response.locals.business;
+  const { db_name, priceList, currency, groupCode, paymentCondition, paymentMethod, rfcGeneric, sapConfig, type } = response.locals.business;
   const { user, shipping, billing, shoppingCart } = request.body;
-/*
-  //console.log("Data user: ", user);
-  //console.log("Data shipping: ", shipping);
-  //console.log("Data billing: ", billing);
-  //console.log("Data shoppingCart: ", shoppingCart);
-*/
   const responseModel = new ResponseModel();
 
   let model: ProfileModel = new ProfileModel(); // create profile
-// Validacion de la nueva cuenta
+  // Validacion de la nueva cuenta
   try {
-    if(type === 'SQL'){
+    if (type === 'SQL') {
       let modelLogin: UsersModel = new UsersModel();
       //Datos de la cuenta que se esta intentando ingresar
       modelLogin.action = "login";
       modelLogin.business = db_name;
       modelLogin.arg1 = user.email;
-      
+
       let result = await UsersProcedure(modelLogin);
-      
+
       //Validate if de email exist
       if (result[0]) {
         responseModel.message = "Comuníquese con nosotros para obtener sus datos de registro (Email)";
@@ -1191,7 +1186,7 @@ export async function createPartner(request: Request, response: Response) {
         return;
       }
       //validacion del RFC
-      if (!( user.rfc === "" || user.rfc === "XAXX010101000" || user.rfc === "XEXX010101000")) {
+      if (!(user.rfc === "" || user.rfc === "XAXX010101000" || user.rfc === "XEXX010101000")) {
         modelLogin.action = "forRFC";
         modelLogin.arg1 = user.rfc;
         let result = await UsersProcedure(modelLogin);
@@ -1206,8 +1201,8 @@ export async function createPartner(request: Request, response: Response) {
 
       let exit = true;
       let cardCodeDefault: string = "";
-      let taxCodeDefault: string ="";
-      let territory: string="";
+      let taxCodeDefault: string = "";
+      let territory: string = "";
       do {
         // generate CardCode
         cardCodeDefault = await generateCardCode(user.email);
@@ -1303,11 +1298,12 @@ export async function createPartner(request: Request, response: Response) {
       };
       ////console.log("data of data the model", data);
       let businessPartnersInterface = new BusinessPartners(sapConfig);
-      
+
       businessPartnersInterface.createXML(data);
       businessPartnersInterface.replaceSapVersion();
       businessPartnersInterface.setOptions();
       let partnerResponse: any = await businessPartnersInterface.createCall();
+      console.log('117>> partnerResponse',partnerResponse )
 
       if (!partnerResponse.status) {
         responseModel.message = partnerResponse.error;
@@ -1342,21 +1338,21 @@ export async function createPartner(request: Request, response: Response) {
         }
         responseModel.status = 1;
         responseModel.message = "Cuenta creada. Inicia sesión";
-        
-        successfullyCreate(cardCodeDefault,user.name,user.email,user.password);
+
+        successfullyCreate(cardCodeDefault, user.name, user.email, user.password);
         response.json(responseModel);
         return;
       }
-    }else{
-      const sh = new SchemaService ();
+    } else {
+      const sh = new SchemaService();
       let modelLogin: UsersModel = new UsersModel();
       //Datos de la cuenta que se esta intentando ingresar
       modelLogin.action = "login";
       modelLogin.business = db_name;
       modelLogin.arg1 = user.email;
-      
+
       let result = await UsersProcedure(modelLogin);
-      
+
       //Validate if de email exist
       if (result[0]) {
         responseModel.message = "Comuníquese con nosotros para obtener sus datos de registro (Email)";
@@ -1364,7 +1360,7 @@ export async function createPartner(request: Request, response: Response) {
         return;
       }
       //validacion del RFC
-      if (!( user.rfc === "" || user.rfc === "XAXX010101000" || user.rfc === "XEXX010101000")) {
+      if (!(user.rfc === "" || user.rfc === "XAXX010101000" || user.rfc === "XEXX010101000")) {
         modelLogin.action = "forRFC";
         modelLogin.arg1 = user.rfc;
         let result = await UsersProcedure(modelLogin);
@@ -1379,8 +1375,8 @@ export async function createPartner(request: Request, response: Response) {
 
       let exit = true;
       let cardCodeDefault: string = "";
-      let taxCodeDefault: string ="";
-      let territory: string="";
+      let taxCodeDefault: string = "";
+      let territory: string = "";
       do {
         // generate CardCode
         cardCodeDefault = await generateCardCode(user.email);
@@ -1397,7 +1393,7 @@ export async function createPartner(request: Request, response: Response) {
           //Validate if cardCodeExist
           exit = false;
           logger.error("CardCode donst exist");
-        } 
+        }
       } while (exit);
 
       let model = new BusinessPartner();
@@ -1471,35 +1467,35 @@ export async function createPartner(request: Request, response: Response) {
       model.password = user.password;
       model.Territory = territory;
       model.CntctPrsnName = user.CntctPrsnName.toUpperCase();
-      let BPAddresses : any= [];
-      
+      let BPAddresses: any = [];
+
       for (let index = 0; index < newAddresses.length; index++) {
-        const element = newAddresses[index];           
-          let lines ={
-            AddressName: element.Address.toUpperCase(),
-            Street: element.Street.toUpperCase(),
-            Block: element.Block.toUpperCase(),
-            ZipCode: element.ZipCode,
-            City: element.City.toUpperCase(),
-            County: element.County.toUpperCase(),
-            State: element.State.toUpperCase(),
-            AddressType: "bo_ShipTo"
-          }
-          BPAddresses.push(lines);
+        const element = newAddresses[index];
+        let lines = {
+          AddressName: element.Address.toUpperCase(),
+          Street: element.Street.toUpperCase(),
+          Block: element.Block.toUpperCase(),
+          ZipCode: element.ZipCode,
+          City: element.City.toUpperCase(),
+          County: element.County.toUpperCase(),
+          State: element.State.toUpperCase(),
+          AddressType: "bo_ShipTo"
+        }
+        BPAddresses.push(lines);
       }
       for (let index = 0; index < newAddressBill.length; index++) {
-        const element = newAddressBill[index];           
-          let lines ={
-            AddressName: element.Address.toUpperCase(),
-            Street: element.Street.toUpperCase(),
-            Block: element.Block.toUpperCase(),
-            ZipCode: element.ZipCode,
-            City: element.City.toUpperCase(),
-            County: element.County.toUpperCase(),
-            State: element.State.toUpperCase(),
-            AddressType: "bo_BillTo"
-          }
-          BPAddresses.push(lines);
+        const element = newAddressBill[index];
+        let lines = {
+          AddressName: element.Address.toUpperCase(),
+          Street: element.Street.toUpperCase(),
+          Block: element.Block.toUpperCase(),
+          ZipCode: element.ZipCode,
+          City: element.City.toUpperCase(),
+          County: element.County.toUpperCase(),
+          State: element.State.toUpperCase(),
+          AddressType: "bo_BillTo"
+        }
+        BPAddresses.push(lines);
       }
       let data = {
         CardCode: model.CardCode,
@@ -1511,18 +1507,18 @@ export async function createPartner(request: Request, response: Response) {
         U_FMB_Handel_Pass: model.password,
         Phone1: model.Phone1,
         Phone2: model.Phone2,
-        U_FMB_Handel_ATV : '1',
+        U_FMB_Handel_ATV: '1',
         Series: 64,
         PriceListNum: '1',
         U_almacen_ecommerce: '001',
         U_FMB_Handel_CFDI: model.MainUsage,
         BPAddresses,
         ContactEmployees: [{
-          Name : model.CntctPrsnName
+          Name: model.CntctPrsnName
         }]
       };
-      let partnerResponse = await sh.NewOrderService("BusinessPartners",data);
-      if(partnerResponse.message){
+      let partnerResponse = await sh.NewOrderService("BusinessPartners", data);
+      if (partnerResponse.message) {
         let error = partnerResponse.message.error.message.value;
         logger.error("UsersController => CreatePartner ", error);
         responseModel.message = error;
@@ -1557,8 +1553,8 @@ export async function createPartner(request: Request, response: Response) {
         }
         responseModel.status = 1;
         responseModel.message = "Cuenta creada. Inicia sesión";
-        
-        successfullyCreate(partnerResponse.CardCode,user.name,user.email,user.password);
+
+        successfullyCreate(partnerResponse.CardCode, user.name, user.email, user.password);
         response.json(responseModel);
         return;
       }
@@ -1566,74 +1562,74 @@ export async function createPartner(request: Request, response: Response) {
 
   } catch (e) {
     logger.error(e);
-    responseModel.message = "Ocurrió un error al crear tu cuenta 3";
+    responseModel.message = "ERROR INESPERADO AL CREAR LA CUENTA";
     response.json(responseModel);
   }
 }
 
 export async function updatePartner(request: Request, response: Response) {
-  const { db_name, sapConfig, type} = response.locals.business;
+  const { db_name, sapConfig, type } = response.locals.business;
   const responseModel = new ResponseModel();
 
   let data = request.body;
 
   if (type === 'SQL') {
     try {
-        let model: UsersModel = new UsersModel();
-        model.action = "getBusinessPartnerInfo";
-        model.business = db_name;
-        model.arg1 = data.user;
-    
-        let result = await UsersProcedure(model);
-        if (!result || !result[0]) {
-          //responseModel.message = "Su cuenta no se encontró en nuestros registros";
+      let model: UsersModel = new UsersModel();
+      model.action = "getBusinessPartnerInfo";
+      model.business = db_name;
+      model.arg1 = data.user;
+
+      let result = await UsersProcedure(model);
+      if (!result || !result[0]) {
+        //responseModel.message = "Su cuenta no se encontró en nuestros registros";
+        response.json(responseModel);
+        return;
+      }
+
+      let changeJustPassword = false;
+      if (data.oldPass && data.oldPass !== '' && data.oldPass !== '*****') {
+        if (result[0].U_FMB_Handel_Pass != data.oldPass) {
+          responseModel.message = "La contraseña actual es incorrecta";
           response.json(responseModel);
           return;
-        }
-
-        let changeJustPassword = false;
-        if(data.oldPass && data.oldPass !== '' && data.oldPass !== '*****'){
-          if (result[0].U_FMB_Handel_Pass != data.oldPass) {
-            responseModel.message = "La contraseña actual es incorrecta";
-            response.json(responseModel);
-            return;
-          } else {
-            if(data.newPass1 !== ''){
-              changeJustPassword = true;
-            }
+        } else {
+          if (data.newPass1 !== '') {
+            changeJustPassword = true;
           }
         }
-        
-        let businessPartnersInterface = new BusinessPartners(sapConfig);
-        if(changeJustPassword === true){
-          businessPartnersInterface.updateXMLPassword(data);
-        } else {
-          businessPartnersInterface.updateXMLPersonalData(data);
-        }    
-        businessPartnersInterface.replaceSapVersion();
-        businessPartnersInterface.setOptions();
-        let partnerResponse: any = await businessPartnersInterface.createCall();
-        
-        if (!partnerResponse.status) {
-          responseModel.message = partnerResponse.error;
-          response.json(responseModel);
-          return;
-        }
-    
-        responseModel.message = 'Usuario actualizado';
-        responseModel.status = 1;        
+      }
+
+      let businessPartnersInterface = new BusinessPartners(sapConfig);
+      if (changeJustPassword === true) {
+        businessPartnersInterface.updateXMLPassword(data);
+      } else {
+        businessPartnersInterface.updateXMLPersonalData(data);
+      }
+      businessPartnersInterface.replaceSapVersion();
+      businessPartnersInterface.setOptions();
+      let partnerResponse: any = await businessPartnersInterface.createCall();
+
+      if (!partnerResponse.status) {
+        responseModel.message = partnerResponse.error;
         response.json(responseModel);
+        return;
+      }
+
+      responseModel.message = 'Usuario actualizado';
+      responseModel.status = 1;
+      response.json(responseModel);
     } catch (error) {
-        responseModel.message = "Ocurrió un problema inesperado";
-        response.json(responseModel);
+      responseModel.message = "Ocurrió un problema inesperado";
+      response.json(responseModel);
     }
-  }else{
+  } else {
     try {
       let model: UsersModel = new UsersModel();
       model.action = "getBusinessPartnerInfo";
       model.business = db_name;
       model.arg1 = data.user;
-    
+
       let result = await UsersProcedure(model);
       if (!result || !result[0]) {
         //responseModel.message = "Su cuenta no se encontró en nuestros registros";
@@ -1641,24 +1637,24 @@ export async function updatePartner(request: Request, response: Response) {
         return;
       }
       let changeJustPassword = false;
-      if(data.oldPass && data.oldPass !== '' && data.oldPass !== '*****'){
+      if (data.oldPass && data.oldPass !== '' && data.oldPass !== '*****') {
         if (result[0].U_FMB_Handel_Pass != data.oldPass) {
           responseModel.message = "La contraseña actual es incorrecta";
           response.json(responseModel);
           return;
         } else {
-          if(data.newPass1 !== ''){
+          if (data.newPass1 !== '') {
             changeJustPassword = true;
           }
         }
       }
 
       // Para actualizar direcciones en HANA
-      const sh = new SchemaService ();
+      const sh = new SchemaService();
 
       // Actualizar información del socio
-      let data1:any  = {};
-      if(changeJustPassword === true){
+      let data1: any = {};
+      if (changeJustPassword === true) {
         data1 = {
           CardName: data.name.toUpperCase(),
           EmailAddress: data.email,
@@ -1678,15 +1674,15 @@ export async function updatePartner(request: Request, response: Response) {
       }
 
       let order = `BusinessPartners('${data.user}')`;
-      
-      let partnerResponse = await sh.UpdatePartner(order,data1);
+
+      let partnerResponse = await sh.UpdatePartner(order, data1);
 
       console.log('con>', partnerResponse);
 
       responseModel.status = 1;
       responseModel.message = "Datos Actualizados";
       response.json(responseModel);
-      return; 
+      return;
     } catch (error) {
       responseModel.message = "Ocurrió un problema inesperado";
       response.json(responseModel);
@@ -1694,7 +1690,7 @@ export async function updatePartner(request: Request, response: Response) {
   }
 }
 
-export async function sendJobMail(request: Request, response: Response): Promise<void> {  
+export async function sendJobMail(request: Request, response: Response): Promise<void> {
   const responseModel = new ResponseModel();
   let name = '', jobType = '', education = '', address = '', postalCode = '', phone = '', mail = '', lastName = '', cv = '';
 
@@ -1702,21 +1698,21 @@ export async function sendJobMail(request: Request, response: Response): Promise
   let fullRouteName = "";
   var form = new formidable.IncomingForm();
   form.parse(request, async function (err: any, fields: any, files: any) {
-    if(!err) {
-      jobType = fields.jobType; 
-      education = fields.education; 
-      address = fields.address; 
-      postalCode = fields.postalCode; 
-      phone = fields.phone; 
-      mail = fields.mail; 
-      lastName = fields.lastName; 
-      cv = fields.cv; 
+    if (!err) {
+      jobType = fields.jobType;
+      education = fields.education;
+      address = fields.address;
+      postalCode = fields.postalCode;
+      phone = fields.phone;
+      mail = fields.mail;
+      lastName = fields.lastName;
+      cv = fields.cv;
       name = fields.name;
 
       let ext = cv.lastIndexOf(".");
       let validateExt = cv.substring(ext, cv.length);
       let route = __dirname + "/../../CV/";
-      let fileName = moment().format("YYYY-MM-DD_HH-mm").toString() + "_CV_" + lastName.substring(0,1) + name.substring(0,1) + validateExt;
+      let fileName = moment().format("YYYY-MM-DD_HH-mm").toString() + "_CV_" + lastName.substring(0, 1) + name.substring(0, 1) + validateExt;
       fileNameMail = fileName;
       fullRouteName = route + fileName;
       await fs.rename(files.file.path, fullRouteName);
@@ -1825,18 +1821,18 @@ export async function sendJobMail(request: Request, response: Response): Promise
       let dataMail = await EmailProcedure("getCreate");
       ////console.log(dataMail);
       let bcc;
-      if (dataMail[0].validateCreateBCC === 1){
+      if (dataMail[0].validateCreateBCC === 1) {
         bcc = dataMail[0].createBCC;
-      }else{
-        bcc="";
+      } else {
+        bcc = "";
       }
       let subject = dataMail[0].createSubject;
       subject = "Nueva solicitud de empleo de bolsa de trabajo IRCO E-Handel";
-      let sendMail = await helpers.sendEmail('earmienta@grupoirsa.com.mx',"",bcc,subject,msghtml,{filename: fileNameMail, path: fullRouteName});
-  
+      let sendMail = await helpers.sendEmail('earmienta@grupoirsa.com.mx', "", bcc, subject, msghtml, { filename: fileNameMail, path: fullRouteName });
+
       responseModel.message = 'Correo de oferta laboral enviado';
-      responseModel.status = 1;          
-      response.json(responseModel);  
+      responseModel.status = 1;
+      response.json(responseModel);
     } else {
       responseModel.message = "Ocurrió un problema inesperado";
       response.json(responseModel);
@@ -1844,7 +1840,7 @@ export async function sendJobMail(request: Request, response: Response): Promise
   });
 }
 
-export async function successfullyCreate(CardCode: String, CardName: string, email: string, password: string){
+export async function successfullyCreate(CardCode: String, CardName: string, email: string, password: string) {
   let msghtml = `<html>
 
   <head>
@@ -2383,17 +2379,17 @@ export async function successfullyCreate(CardCode: String, CardName: string, ema
   let dataMail = await EmailProcedure("getCreate");
   ////console.log(dataMail);
   let bcc;
-  if (dataMail[0].validateCreateBCC === 1){
+  if (dataMail[0].validateCreateBCC === 1) {
     bcc = dataMail[0].createBCC;
-  }else{
-    bcc="";
+  } else {
+    bcc = "";
   }
   let subject = dataMail[0].createSubject;
-  let sendMail = await helpers.sendEmail( email,"",bcc,subject,msghtml,null );
+  let sendMail = await helpers.sendEmail(email, "", bcc, subject, msghtml, null);
 }
 
-export async function updateAddressPartner(request: Request,response: Response) {
-  const { db_name, sapConfig, type} = response.locals.business;
+export async function updateAddressPartner(request: Request, response: Response) {
+  const { db_name, sapConfig, type } = response.locals.business;
   const { CardCode } = response.locals.user;
   const { addresses } = request.body;
   // console.log("Direcciones:",addresses)
@@ -2401,7 +2397,7 @@ export async function updateAddressPartner(request: Request,response: Response) 
 
   let model: ProfileModel = new ProfileModel(); // create profile
   // Para actualizar direcciones en SQL
-  if(type === 'SQL'){
+  if (type === 'SQL') {
     try {
 
       let model = new BusinessPartner();
@@ -2431,7 +2427,7 @@ export async function updateAddressPartner(request: Request,response: Response) 
         newAddresses.push(newAddress);
       });
       ////console.log('newAddresses',newAddresses);
-    
+
       model.DeliveriesAddress = newAddresses;
 
       model.CardCode = CardCode;
@@ -2440,7 +2436,7 @@ export async function updateAddressPartner(request: Request,response: Response) 
         model: model,
         addressnew: addresses,
       };
-      
+
       ////console.log(data);
       // console.log('con<_____',data.model.DeliveriesAddress, '__________',data.addressnew);
       let businessPartnersInterface = new BusinessPartners(sapConfig);
@@ -2465,24 +2461,24 @@ export async function updateAddressPartner(request: Request,response: Response) 
       responseModel.message = "Ocurrio un error al actualizar sus direcciones";
       response.json(responseModel);
     }
-  }else{
+  } else {
     // Para actualizar direcciones en HANA
-    const sh = new SchemaService ();
+    const sh = new SchemaService();
     try {
       let newAddresses: any = [];
-      addresses.map((address: any, index:any) => {
+      addresses.map((address: any, index: any) => {
         let newAddress = {
-          AddressName : address.Address.toUpperCase(),
-          Street : address.Street.toUpperCase(),
-          Block : address.Block.toUpperCase(),
-          City : address.City.toUpperCase(),
-          ZipCode : address.ZipCode,
-          State : address.State.toUpperCase(),
-          Country : address.Country.toUpperCase(),
+          AddressName: address.Address.toUpperCase(),
+          Street: address.Street.toUpperCase(),
+          Block: address.Block.toUpperCase(),
+          City: address.City.toUpperCase(),
+          ZipCode: address.ZipCode,
+          State: address.State.toUpperCase(),
+          Country: address.Country.toUpperCase(),
           RowNum: address.LineNum,
           BPCode: CardCode,
-          AddressType : address.AdresType === 'B' ? "bo_BillTo" : "bo_ShipTo",
-        }       
+          AddressType: address.AdresType === 'B' ? "bo_BillTo" : "bo_ShipTo",
+        }
 
         newAddresses.push(newAddress);
       });
@@ -2492,10 +2488,10 @@ export async function updateAddressPartner(request: Request,response: Response) 
       };
 
       let order = `BusinessPartners('${CardCode}')`;
-      
-      let partnerResponse = await sh.UpdatePartner(order,data);
 
-      if(partnerResponse.message){
+      let partnerResponse = await sh.UpdatePartner(order, data);
+
+      if (partnerResponse.message) {
         let error = partnerResponse.message.error.message.value;
         responseModel.message = error;
         response.json(responseModel);
@@ -2509,16 +2505,16 @@ export async function updateAddressPartner(request: Request,response: Response) 
       let addressesResponse: any = await ProfileProcedure(modelP);
       if (addressesResponse.length > 0) {
         responseModel.data = addressesResponse;
-      }else{
+      } else {
         responseModel.data = [];
       }
 
       responseModel.status = 1;
       responseModel.message = "direcciones Actualizadas";
       response.json(responseModel);
-      return;      
+      return;
     } catch (error) {
-      logger.error('Editar Direcciones: =>',error);
+      logger.error('Editar Direcciones: =>', error);
       responseModel.message = "Ocurrio un error al actualizar sus direcciones";
       response.json(responseModel);
     }
@@ -2538,7 +2534,7 @@ export async function loginOUSR(request: Request, response: Response) {
     model.arg1 = email;
     let result = await UsersProcedure(model);
     responseModel.from = 1;
-    
+
     if (!result || !result[0]) {
       responseModel.message = "La cuenta no existe";
       responseModel.type = 1;
@@ -2553,9 +2549,9 @@ export async function loginOUSR(request: Request, response: Response) {
     }
     response.locals.user = result[0];
     response.locals.lgs = localstorage;
-    
+
     // let profile: any = await getProfile(request, response, true);
-    
+
     // if (!profile.status) {
     //   responseModel.message = "Ocurrió un problema al consultar perfil";
     //   response.json(responseModel);
@@ -2567,7 +2563,7 @@ export async function loginOUSR(request: Request, response: Response) {
 
     // Seems like it works, generate a token
     let token = createToken(result[0]);
-    
+
     // Remove password
     result[0].U_FMB_Password = undefined;
     responseModel.type = 1;
@@ -2596,7 +2592,7 @@ export async function searchAccount(request: Request, response: Response) {
     modelLogin.arg1 = user.email;
     //Validamos si ya esta registrado el correo
     let result = await UsersProcedure(modelLogin);
-    if( result[0] ){
+    if (result[0]) {
       let user = {
         email: result[0].U_FMB_Handel_Email,
         password: result[0].U_FMB_Handel_Pass,
@@ -2604,14 +2600,14 @@ export async function searchAccount(request: Request, response: Response) {
         cardCode: result[0].CardCode,
         rut: ""
       }
-      sendData(user.cardCode,user.cardName,user.email,user.password,user.rut);
+      sendData(user.cardCode, user.cardName, user.email, user.password, user.rut);
       responseModel.message = "Correo registrado, se ha enviado un correo para recuperación de su cuenta";
       //Se envia correo
       response.json(responseModel);
       return;
     };
     //Validamos el RFC
-    if (!( user.rfc === "" || user.rfc === "99999999-9" || user.rfc === "11111111-1")) {
+    if (!(user.rfc === "" || user.rfc === "99999999-9" || user.rfc === "11111111-1")) {
       modelLogin.action = "forRFC";
       modelLogin.arg1 = user.rfc;
       //Validamos si ya esta registrado el RFC
@@ -2624,7 +2620,7 @@ export async function searchAccount(request: Request, response: Response) {
           cardCode: result[0].CardCode,
           rut: result[0].LicTradNum
         }
-        sendData(user.cardCode,user.cardName,user.email,user.password,user.rut);
+        sendData(user.cardCode, user.cardName, user.email, user.password, user.rut);
         responseModel.message = "RFC registrado, se ha enviado un correo para recuperación de su cuenta";
         //Se envia correo
         response.json(responseModel);
@@ -2642,12 +2638,12 @@ export async function searchAccount(request: Request, response: Response) {
 
 }
 
-export async function sendData(CardCode: String, CardName: string, email: string, password: string,rut: string){
+export async function sendData(CardCode: String, CardName: string, email: string, password: string, rut: string) {
   let direccion: string;
-  if ( rut === ""){
-    direccion = "correo "+ email;
-  }else{
-    direccion = "RFC "+ rut;
+  if (rut === "") {
+    direccion = "correo " + email;
+  } else {
+    direccion = "RFC " + rut;
   }
   let msghtml = `<html>
 
@@ -3159,19 +3155,19 @@ export async function sendData(CardCode: String, CardName: string, email: string
   let dataMail = await EmailProcedure("getCreate");
   ////console.log(dataMail);
   let bcc;
-  if (dataMail[0].validateCreateBCC === 1){
+  if (dataMail[0].validateCreateBCC === 1) {
     bcc = dataMail[0].createBCC;
-  }else{
-    bcc="";
+  } else {
+    bcc = "";
   }
   let subject = dataMail[0].createSubject;
-  let sendMail = await helpers.sendEmail( email,"",bcc,subject,msghtml,null );
+  let sendMail = await helpers.sendEmail(email, "", bcc, subject, msghtml, null);
 }
 
 export async function jobTypes(request: Request, response: Response): Promise<void> {
-  let {db_name} = response.locals.business;
+  let { db_name } = response.locals.business;
   //const {wareHouse} = response.locals.business;
-  const {wareHouse} = response.locals.user;
+  const { wareHouse } = response.locals.user;
   let responseModel = new ResponseModel();
 
   try {
@@ -3198,12 +3194,12 @@ export async function jobTypes(request: Request, response: Response): Promise<vo
   response.json(responseModel);
 }
 
-export async function deleteAddressPartner(request: Request,response: Response) {
+export async function deleteAddressPartner(request: Request, response: Response) {
   const { db_name, sapConfig } = response.locals.business;
   const { CardCode } = response.locals.user;
   const { addresses } = request.body;
   const responseModel = new ResponseModel();
-  let model: ProfileModel = new ProfileModel(); 
+  let model: ProfileModel = new ProfileModel();
 
   try {
     let model = new BusinessPartner();
@@ -3237,13 +3233,13 @@ export async function deleteAddressPartner(request: Request,response: Response) 
       model: model,
       addressnew: addresses,
     };
-    
+
     let businessPartnersInterface = new BusinessPartners(sapConfig);
     businessPartnersInterface.deleteXMLAddress(data);// createXMLUpdateAddresses
     businessPartnersInterface.replaceSapVersion();
     businessPartnersInterface.setOptions();
     // console.log("Impresion del bussiness",businessPartnersInterface);
-    let partnerResponse= await businessPartnersInterface.createCall();
+    let partnerResponse = await businessPartnersInterface.createCall();
     // console.log("ResponseDiserver",partnerResponse);
     if (!partnerResponse.status) {
       responseModel.message = partnerResponse.error;
@@ -3262,9 +3258,9 @@ export async function deleteAddressPartner(request: Request,response: Response) 
   }
 }
 
-export async function clientAccessWithCreditExceeded(CardCode: String, CardName: string, email: string){
+export async function clientAccessWithCreditExceeded(CardCode: String, CardName: string, email: string) {
   const responseModel = new ResponseModel();
-  let msghtml =  `<html>
+  let msghtml = `<html>
   <head>
     <title>Límite de crédito excedido</title>
     <meta charset="UTF-8">
@@ -3675,30 +3671,30 @@ export async function clientAccessWithCreditExceeded(CardCode: String, CardName:
     </table>
   </body>
 </html>`;
-  try{
+  try {
     let dataMail = await EmailProcedure("getCreditLine");
     ////console.log(dataMail);
     let bcc;
     let destino;
-    if (dataMail[0].validateCreditLine === 1){
+    if (dataMail[0].validateCreditLine === 1) {
       bcc = dataMail[0].creditLineBCC;
       // Se puede cambiar por un correo en especifico
       destino = dataMail[0].creditLineBCC;
 
-    }else{
-      bcc="";
+    } else {
+      bcc = "";
     }
     let subject = dataMail[0].creditLineSubject;
-    let sendMail = await helpers.sendEmail(destino,"",bcc,subject,msghtml,null );
-    
+    let sendMail = await helpers.sendEmail(destino, "", bcc, subject, msghtml, null);
+
     responseModel.status = 1;
     responseModel.message = " Correo enviado ";
-    responseModel.data = { response: sendMail}
+    responseModel.data = { response: sendMail }
     return responseModel;
-  }catch (e) {
+  } catch (e) {
     logger.error(`${e}`);
     responseModel.status = 0;
     responseModel.message = " Ocurrió un error al enviar el correo de confirmación";
-    return responseModel;  
+    return responseModel;
   }
 }
